@@ -8,3 +8,5 @@ tokio = { version = "*", features = ["full"] }
 reqwest = { version = "*", features = ["json"] }
 lazy_static = "*"
 serde = { version = "*", features = ["derive"] }
+actix-web = "*"
+futures = "*"

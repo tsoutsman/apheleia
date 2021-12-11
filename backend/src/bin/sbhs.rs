@@ -25,7 +25,7 @@ async fn sbhs_token_to_id(token: String) -> Result<String, Box<dyn std::error::E
     Ok(body.student_id)
 }
 
-#[tokio::main]
+#[backend::main]
 async fn main() {
     backend::run(sbhs_token_to_id).await;
 }
