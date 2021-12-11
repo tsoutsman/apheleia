@@ -11,6 +11,7 @@ pub struct JsonResponse {
     // fields in the response.
 }
 
+#[inline]
 async fn sbhs_token_to_id(token: String) -> Result<String, Box<dyn std::error::Error>> {
     const API_ENDPOINT: &str = "https://student.sbhs.net.au/api/details/userinfo";
 
@@ -25,7 +26,6 @@ async fn sbhs_token_to_id(token: String) -> Result<String, Box<dyn std::error::E
     Ok(body.student_id)
 }
 
-#[backend::main]
-async fn main() {
-    backend::run(sbhs_token_to_id).await;
+fn main() -> std::io::Result<()> {
+    backend::run(sbhs_token_to_id)
 }
