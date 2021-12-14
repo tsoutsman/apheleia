@@ -10,3 +10,6 @@ lazy_static = "*"
 serde = { version = "*", features = ["derive"] }
 actix-web = "*"
 futures = "*"
+juniper = "*"
+juniper_actix = "*"
+sqlx = { version = "*", features = ["runtime-tokio-rustls", "postgres"] }

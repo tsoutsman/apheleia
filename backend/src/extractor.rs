@@ -1,65 +1,48 @@
-use std::marker::PhantomData;
+use std::sync::Arc;
 
 use crate::{BoxFuture, FuncReturn};
 
 #[derive(Clone, Debug)]
-pub struct Id<F>(
-    pub String,
-    /// I think this is the correct use of PhantomData. I need a generic for IdConfig in the
-    /// FromRequest implementation for Id, but if the generic is not directly used by Id,
-    /// the compiler says that the generic is unconstrained.
-    PhantomData<F>,
-)
-where
-    F: Fn(String) -> FuncReturn + Clone;
+pub struct Id(pub String);
 
-impl<F> From<String> for Id<F>
-where
-    F: Fn(String) -> FuncReturn + Clone,
-{
+impl From<String> for Id {
     #[inline]
     fn from(id: String) -> Self {
-        Self(id, PhantomData)
+        Self(id)
     }
 }
 
-impl<F> From<Id<F>> for String
-where
-    F: Fn(String) -> FuncReturn + Clone,
-{
+impl From<Id> for String {
     #[inline]
-    fn from(id: Id<F>) -> Self {
+    fn from(id: Id) -> Self {
         id.0
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct IdConfig<F>
-where
-    F: Fn(String) -> FuncReturn + Clone,
-{
-    pub token_to_id_function: F,
+#[derive(Clone)]
+pub struct IdConfig {
+    pub token_to_id_function: Arc<dyn Fn(String) -> FuncReturn + Send + Sync>,
 }
 
-impl<F> Default for IdConfig<F>
-where
-    F: Fn(String) -> FuncReturn + Clone,
-{
+impl std::fmt::Debug for IdConfig {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        todo!()
+    }
+}
+
+impl Default for IdConfig {
     fn default() -> Self {
         unreachable!("No ID extractor specified");
     }
 }
 
-impl<F> actix_web::FromRequest for Id<F>
-where
-    F: Fn(String) -> FuncReturn + Clone + 'static + Send + Sync,
-{
+impl actix_web::FromRequest for Id {
     // TODO
     type Error = ();
 
     type Future = BoxFuture<Result<Self, Self::Error>>;
 
-    type Config = IdConfig<F>;
+    type Config = IdConfig;
 
     #[inline]
     fn from_request(req: &actix_web::HttpRequest, _: &mut actix_web::dev::Payload) -> Self::Future {
@@ -79,18 +62,12 @@ where
             // No authorization header
             None => return Box::pin(futures::future::ready(Err(()))),
         };
-        let f = match req.app_data::<IdConfig<F>>() {
-            // TODO is cloning here expensive?
-            Some(f) => f.clone(),
+        let f = match req.app_data::<IdConfig>() {
+            Some(f) => f.token_to_id_function.clone(),
             None => unreachable!("No ID extractor specified"),
         };
 
-        let result = async move {
-            (f.token_to_id_function)(token)
-                .await
-                .map(Self::from)
-                .map_err(|_| ())
-        };
+        let result = async move { (f)(token).await.map(Self::from).map_err(|_| ()) };
         Box::pin(result)
     }
 }
