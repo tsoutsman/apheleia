@@ -597,6 +597,7 @@ dependencies = [
  "lazy_static",
  "reqwest",
  "serde",
+ "smallvec",
  "sqlx",
  "tokio 1.14.0",
 ]

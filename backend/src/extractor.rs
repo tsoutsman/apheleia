@@ -1,48 +1,46 @@
 use std::sync::Arc;
 
-use crate::{BoxFuture, FuncReturn};
+use crate::{BoxFuture, FuncReturn, SubjectArea};
+
+use smallvec::SmallVec;
 
 #[derive(Clone, Debug)]
-pub struct Id(pub String);
-
-impl From<String> for Id {
-    #[inline]
-    fn from(id: String) -> Self {
-        Self(id)
-    }
+pub struct User {
+    pub id: String,
+    pub admin_of: SmallVec<[SubjectArea; 1]>,
 }
 
-impl From<Id> for String {
+impl From<User> for String {
     #[inline]
-    fn from(id: Id) -> Self {
-        id.0
+    fn from(user: User) -> Self {
+        user.id
     }
 }
 
 #[derive(Clone)]
-pub struct IdConfig {
+pub struct UserConfig {
     pub token_to_id_function: Arc<dyn Fn(String) -> FuncReturn + Send + Sync>,
 }
 
-impl std::fmt::Debug for IdConfig {
+impl std::fmt::Debug for UserConfig {
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         todo!()
     }
 }
 
-impl Default for IdConfig {
+impl Default for UserConfig {
     fn default() -> Self {
         unreachable!("No ID extractor specified");
     }
 }
 
-impl actix_web::FromRequest for Id {
+impl actix_web::FromRequest for User {
     // TODO
     type Error = ();
 
     type Future = BoxFuture<Result<Self, Self::Error>>;
 
-    type Config = IdConfig;
+    type Config = UserConfig;
 
     #[inline]
     fn from_request(req: &actix_web::HttpRequest, _: &mut actix_web::dev::Payload) -> Self::Future {
@@ -62,12 +60,17 @@ impl actix_web::FromRequest for Id {
             // No authorization header
             None => return Box::pin(futures::future::ready(Err(()))),
         };
-        let f = match req.app_data::<IdConfig>() {
+        let f = match req.app_data::<UserConfig>() {
             Some(f) => f.token_to_id_function.clone(),
             None => unreachable!("No ID extractor specified"),
         };
 
-        let result = async move { (f)(token).await.map(Self::from).map_err(|_| ()) };
+        let result = async move {
+            let id = (f)(token).await.map_err(|_| ())?;
+            let admin_of = SubjectArea::admin_of(&id);
+
+            Ok(Self { id, admin_of })
+        };
         Box::pin(result)
     }
 }
