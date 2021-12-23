@@ -74,12 +74,15 @@ where
             .map_err(|e| -> error::Error { e.into() })?;
 
         HttpServer::new(move || {
-            App::new().data(db_pool.clone()).service(
-                web::resource("/graphql")
-                    .route(web::get().to(graphql_route))
-                    .route(web::post().to(graphql_route))
-                    .app_data(config.clone()),
-            )
+            App::new()
+                .app_data(web::Data::new(schema::schema()))
+                .data(db_pool.clone())
+                .service(
+                    web::resource("/graphql")
+                        .route(web::get().to(graphql_route))
+                        .route(web::post().to(graphql_route))
+                        .app_data(config.clone()),
+                )
         })
         .bind("127.0.0.1:8000")
         .map_err(|e| -> error::Error { e.into() })?
