@@ -13,6 +13,7 @@
 
 pub mod error;
 mod extractor;
+mod schema;
 mod subject_area;
 
 use std::{future::Future, sync::Arc};
@@ -37,7 +38,6 @@ impl<'a> juniper::Context for Context<'a> {}
 // async fn graphiql_route() -> actix_web::Result<HttpResponse> {
 //     graphiql_handler("/graphql", None).await
 // }
-
 async fn graphql_route(
     _req: actix_web::HttpRequest,
     _payload: actix_web::web::Payload,

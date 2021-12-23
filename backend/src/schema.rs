@@ -1,0 +1,3 @@
+struct Query;
+
+struct Mutation;

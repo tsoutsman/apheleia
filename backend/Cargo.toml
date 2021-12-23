@@ -1,5 +1,5 @@
 [package]
-name = "backend"
+name = "apheleia"
 version = "0.1.0"
 edition = "2021"
 
@@ -14,3 +14,4 @@ juniper = "*"
 juniper_actix = "*"
 sqlx = { version = "*", features = ["runtime-tokio-rustls", "postgres"] }
 smallvec = "*"
+apheleia_proc = { version = "*", path = "../backend_proc" }
