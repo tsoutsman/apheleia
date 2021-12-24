@@ -47,7 +47,7 @@ async fn graphql_route(
 ) -> actix_web::Result<HttpResponse> {
     let pool = pool.get_ref();
     let _ctx = Context { user, pool };
-    // graphql_handler(&schema, &context, req, payload).await
+    // graphql_handler(&schema, &_ctx, req, payload).await
     todo!();
 }
 

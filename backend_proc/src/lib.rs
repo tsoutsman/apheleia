@@ -19,11 +19,15 @@ struct Area {
 
 impl Area {
     fn def(&self) -> proc_macro2::TokenStream {
-        self.name().parse().unwrap()
+        self.pascal_case_name().parse().unwrap()
     }
 
-    fn name(&self) -> String {
+    fn pascal_case_name(&self) -> String {
         self.name.replace(" ", "")
+    }
+
+    fn normal_name(&self) -> &str {
+        &self.name
     }
 }
 
@@ -50,12 +54,20 @@ pub fn area_list(attr: TokenStream, item: TokenStream) -> TokenStream {
 
     let area_defs = areas.iter().map(|a| a.def());
 
+    let try_from_pats = areas.iter().map(|a| {
+        let normal_name = a.normal_name();
+        let ty = format!("Self::{}", a.pascal_case_name())
+            .parse::<proc_macro2::TokenStream>()
+            .unwrap();
+        quote! { #normal_name => ::std::result::Result::Ok(#ty) }
+    });
+
     let mut admins: HashMap<&String, Vec<String>> = HashMap::new();
     for area in &areas {
         match admins.get_mut(&area.admin) {
-            Some(v) => v.push(area.name()),
+            Some(v) => v.push(area.pascal_case_name()),
             None => {
-                admins.insert(&area.admin, vec![area.name()]);
+                admins.insert(&area.admin, vec![area.pascal_case_name()]);
             }
         }
     }
@@ -75,6 +87,17 @@ pub fn area_list(attr: TokenStream, item: TokenStream) -> TokenStream {
         #(#attrs)*
         #vis enum #ident {
             #(#area_defs),*
+        }
+
+        impl ::std::convert::TryFrom<&str> for #ident {
+            type Error = ();
+
+            fn try_from(s: &str) -> ::std::result::Result<Self, Self::Error> {
+                match s {
+                    #(#try_from_pats),*,
+                    _ => ::std::result::Result::Err(())
+                }
+            }
         }
 
         impl #ident {
