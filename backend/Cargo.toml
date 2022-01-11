@@ -1,17 +1,7 @@
-[package]
-name = "apheleia"
-version = "0.1.0"
-edition = "2021"
+[workspace]
+members = ["apheleia", "apheleia-proc"]
 
-[dependencies]
-tokio = { version = "*", features = ["full"] }
-reqwest = { version = "*", features = ["json"] }
-lazy_static = "*"
-serde = { version = "*", features = ["derive"] }
-actix-web = "*"
-futures = "*"
-juniper = "*"
-juniper_actix = "*"
-sqlx = { version = "*", features = ["runtime-tokio-rustls", "postgres"] }
-smallvec = "*"
-apheleia_proc = { version = "*", path = "../backend_proc" }
+[profile.release]
+# TODO: strip = "symbols" (stabilizes on 13.1.2022)
+lto = "fat"
+codegen-units = 1

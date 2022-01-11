@@ -1,0 +1,17 @@
+[package]
+name = "apheleia"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "*", features = ["full"] }
+reqwest = { version = "*", default-features = false, features = ["json", "rustls-tls"] }
+lazy_static = "*"
+serde = { version = "*", features = ["derive"] }
+actix-web = "*"
+futures = "*"
+juniper = "*"
+juniper_actix = "*"
+sqlx = { version = "*", features = ["runtime-tokio-rustls", "postgres"] }
+smallvec = "*"
+apheleia_proc = { version = "*", path = "../apheleia-proc" }
