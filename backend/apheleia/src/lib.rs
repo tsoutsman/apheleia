@@ -14,6 +14,7 @@
 pub mod error;
 mod extractor;
 mod schema;
+mod settings;
 mod subject_area;
 
 use std::{future::Future, sync::Arc};

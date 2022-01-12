@@ -31,9 +31,12 @@ WORKDIR apheleia
 
 RUN cargo build --release
 
+ARG bin_name
+RUN echo (*(N[1])) > __var1
+
 # final base
 FROM debian:buster-slim
 # copy build artifact from build container
-COPY --from=build /backend/target/release/sbhs .
+COPY --from=build /backend/target/release/$bin_name .
 
 CMD ["./sbhs"]

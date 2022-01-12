@@ -1,6 +1,10 @@
 use std::marker::PhantomData;
 
-use crate::Context;
+use crate::{
+    settings::{Settings, SettingsInput},
+    subject_area::SubjectArea,
+    Context,
+};
 
 use juniper::{graphql_object, EmptySubscription, GraphQLEnum, RootNode};
 
@@ -19,10 +23,10 @@ pub(crate) struct Query<'a>(PhantomData<&'a ()>);
 #[graphql_object(context = Context<'a>)]
 impl<'a> Query<'a> {
     fn api_version() -> &'static str {
-        "0.1"
+        env!("CARGO_PKG_VERSION")
     }
 
-    fn settings(_ctx: &Context<'a>) -> String {
+    fn settings(_ctx: &Context<'a>) -> Settings {
         todo!();
     }
 
@@ -35,15 +39,15 @@ pub(crate) struct Mutation<'a>(PhantomData<&'a ()>);
 
 #[graphql_object(context = Context<'a>)]
 impl<'a> Mutation<'a> {
-    fn settings(_ctx: &Context<'a>) -> String {
+    fn settings(_ctx: &Context<'a>, _settings: SettingsInput) -> Settings {
         todo!();
     }
 
-    fn loan_item(_ctx: &Context<'a>) -> String {
+    fn loan_item(_ctx: &Context<'a>, _subject_areas: Option<Vec<SubjectArea>>) -> String {
         todo!();
     }
 
-    fn return_item(_ctx: &Context<'a>) -> String {
+    fn return_item(_ctx: &Context<'a>, _subject_areas: Option<Vec<SubjectArea>>) -> String {
         todo!();
     }
 }
