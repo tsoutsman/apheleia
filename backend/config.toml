@@ -1,0 +1,11 @@
+# Example config file
+
+[[Areas]]
+name = "Fencing"
+admin = "400000000"
+db = "fencing-db"
+
+[[Areas]]
+name = "Visual Arts"
+admin = "401000000"
+db = "va-db"

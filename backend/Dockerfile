@@ -1,51 +1,49 @@
 # Adapted from: https://dev.to/rogertorres/first-steps-with-docker-rust-30oi
 # This Dockerfile must be built from the parent directory.
 
-ARG BIN_NAME
+# So that matching GLIBC version is used by debian:buster-slim image
+FROM rust:slim-buster as build
 
-FROM rust as build
+WORKDIR /build
 
-ARG BIN_NAME
-
-COPY ./config.toml /config.toml
-
-WORKDIR /backend
-
-RUN USER=root cargo new --bin $BIN_NAME
+# create dummy packages
+RUN USER=root cargo new --bin bin
 RUN USER=root cargo new --lib apheleia
 RUN USER=root cargo new --lib apheleia-proc
 
-COPY ./backend/Cargo.toml ./Cargo.toml
-COPY ./backend/Cargo.lock ./Cargo.lock
+# copy over manifests
+COPY ./Cargo.toml ./Cargo.toml
+COPY ./Cargo.lock ./Cargo.lock
 
-COPY ./backend/$BIN_NAME/Cargo.toml ./$BIN_NAME/Cargo.toml
-COPY ./backend/apheleia/Cargo.toml ./apheleia/Cargo.toml
-COPY ./backend/apheleia-proc/Cargo.toml ./apheleia-proc/Cargo.toml
+COPY ./bin/Cargo.toml ./bin/Cargo.toml
+COPY ./apheleia/Cargo.toml ./apheleia/Cargo.toml
+COPY ./apheleia-proc/Cargo.toml ./apheleia-proc/Cargo.toml
 
 # cache dependencies
 RUN cargo build --release
 
 # delete dummy binaries
-RUN rm ./target/release/deps/*$BIN_NAME*
+RUN rm ./target/release/deps/bin*
 RUN rm ./target/release/deps/*apheleia*
-# copy source tree
-RUN rm ./$BIN_NAME/src/*.rs
-COPY ./backend/$BIN_NAME/src ./$BIN_NAME/src
-RUN rm ./apheleia/src/*.rs
-COPY ./backend/apheleia/src ./apheleia/src
-RUN rm ./apheleia-proc/src/*.rs
-COPY ./backend/apheleia-proc/src ./apheleia-proc/src
 
-WORKDIR $BIN_NAME
+# copy source tree
+RUN rm ./bin/src/*.rs
+COPY ./bin/src ./bin/src
+RUN rm ./apheleia/src/*.rs
+COPY ./apheleia/src ./apheleia/src
+RUN rm ./apheleia-proc/src/*.rs
+COPY ./apheleia-proc/src ./apheleia-proc/src
+
+# copy config over
+COPY ./config.toml ./config.toml
+
+WORKDIR bin
 
 RUN cargo build --release
 
-# final base
 FROM debian:buster-slim
 
-ARG BIN_NAME
-
 # copy build artifact from build container
-COPY --from=build /backend/target/release/$BIN_NAME .
+COPY --from=build /build/target/release/bin /app
 
-CMD ./$BIN_NAME
+CMD ["/app"]

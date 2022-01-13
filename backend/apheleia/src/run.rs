@@ -31,11 +31,11 @@ where
         };
         let db_pool = PgPoolOptions::new()
             .max_connections(10)
-            .connect("postgres address")
+            .connect("postgres://postgres:hunter2@db")
             .await
             .map_err(|e| -> Error { e.into() })?;
 
-        HttpServer::new(move || {
+        let server = HttpServer::new(move || {
             App::new()
                 .app_data(Data::new(db_pool.clone()))
                 // TODO: CORS?
@@ -50,10 +50,11 @@ where
                 .service(web::resource("/playground").route(web::get().to(playground_route)))
                 .service(web::resource("/graphiql").route(web::get().to(graphiql_route)))
         })
-        .bind("127.0.0.1:8000")
-        .map_err(|e| -> Error { e.into() })?
-        .run()
-        .await
-        .map_err(|e| -> Error { e.into() })
+        .bind("0.0.0.0:8000")
+        .map_err(|e| -> Error { e.into() })?;
+
+        println!("Listening on: {:?}", server.addrs());
+
+        server.run().await.map_err(|e| -> Error { e.into() })
     })
 }

@@ -1,7 +1,8 @@
 [workspace]
-members = ["apheleia", "apheleia-proc", "sbhs"]
+members = ["apheleia", "apheleia-proc", "bin"]
 
 [profile.release]
+# TODO: wait for 1.58 release on Docker
 # strip = "symbols"
 lto = "fat"
-codegen-units = 1
+# codegen-units = 1
