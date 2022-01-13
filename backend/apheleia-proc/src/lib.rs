@@ -11,10 +11,11 @@ struct Config {
 }
 
 #[derive(serde::Deserialize, Debug)]
+#[serde(rename_all = "kebab-case")]
 struct Area {
     name: String,
     pub admin: String,
-    pub db: String,
+    pub schema_name: String,
 }
 
 impl Area {
@@ -28,6 +29,12 @@ impl Area {
 
     fn normal_name(&self) -> &str {
         &self.name
+    }
+
+    fn ty_tokens(&self) -> proc_macro2::TokenStream {
+        format!("Self::{}", self.pascal_case_name())
+            .parse::<proc_macro2::TokenStream>()
+            .unwrap()
     }
 }
 
@@ -56,9 +63,7 @@ pub fn area_list(attr: TokenStream, item: TokenStream) -> TokenStream {
 
     let try_from_pats = areas.iter().map(|a| {
         let normal_name = a.normal_name();
-        let ty = format!("Self::{}", a.pascal_case_name())
-            .parse::<proc_macro2::TokenStream>()
-            .unwrap();
+        let ty = a.ty_tokens();
         quote! { #normal_name => ::std::result::Result::Ok(#ty) }
     });
 
@@ -82,6 +87,15 @@ pub fn area_list(attr: TokenStream, item: TokenStream) -> TokenStream {
             areas_vec.push(']');
             format!(r#""{}" => {}"#, admin, areas_vec).parse().unwrap()
         });
+
+    let iter_all_len = areas.len();
+    let iter_all_defs = areas.iter().map(|a| a.ty_tokens());
+
+    let schema_name_pats = areas.iter().map(|a| {
+        let ty = a.ty_tokens();
+        let schema_name = &a.schema_name;
+        quote! { #ty => #schema_name }
+    });
 
     quote! {
         #(#attrs)*
@@ -108,6 +122,16 @@ pub fn area_list(attr: TokenStream, item: TokenStream) -> TokenStream {
                 match id.as_ref() {
                     #(#admin_of_pats),*,
                     _ => ::smallvec::smallvec![]
+                }
+            }
+
+            pub fn iter_all() -> [Self; #iter_all_len] {
+                [#(#iter_all_defs),*]
+            }
+
+            pub fn schema_name(&self) -> &'static str {
+                match self {
+                    #(#schema_name_pats),*
                 }
             }
         }

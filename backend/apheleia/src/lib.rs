@@ -13,15 +13,19 @@
 )]
 #![cfg_attr(not(test), deny(clippy::unwrap_used))]
 
+mod cli;
 mod context;
+mod db;
 mod error;
 mod extractor;
 mod graphql;
-mod run;
+mod serve;
+
+pub use cli::run;
+pub use error::{Error, Result};
 
 pub(crate) use context::Context;
-pub use error::{Error, Result};
-pub use run::run;
+pub(crate) use serve::serve;
 
 pub(crate) type BoxFuture<T> = futures::future::BoxFuture<'static, T>;
 pub(crate) type FuncReturn = BoxFuture<std::result::Result<String, Box<dyn std::error::Error>>>;

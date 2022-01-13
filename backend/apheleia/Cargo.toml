@@ -16,3 +16,4 @@ uuid = { version = "0.8", features = ["v4"] }
 thiserror = "*"
 serde_json = "*"
 serde = { version = "*", features = ["derive"] }
+clap = { version = "*", features = ["derive"] }

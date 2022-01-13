@@ -3,9 +3,9 @@
 [[Areas]]
 name = "Fencing"
 admin = "400000000"
-db = "fencing-db"
+schema-name = "fencing"
 
 [[Areas]]
 name = "Visual Arts"
 admin = "401000000"
-db = "va-db"
+schema-name = "va"
