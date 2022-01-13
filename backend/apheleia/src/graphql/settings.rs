@@ -1,17 +1,17 @@
 use juniper::{GraphQLEnum, GraphQLInputObject, GraphQLObject};
 
 #[derive(GraphQLObject)]
-pub struct Settings {
-    theme: Theme,
+pub(crate) struct Settings {
+    pub(crate) theme: Theme,
 }
 
 #[derive(GraphQLInputObject)]
-pub struct SettingsInput {
-    theme: Theme,
+pub(crate) struct SettingsInput {
+    pub(crate) theme: Theme,
 }
 
 #[derive(GraphQLEnum)]
-pub enum Theme {
+pub(crate) enum Theme {
     Light,
     Dark,
 }

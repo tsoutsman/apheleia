@@ -1,27 +1,26 @@
+use actix_web::{http::StatusCode, ResponseError};
+
 pub type Result<T> = std::result::Result<T, Error>;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
-    DatabaseConnection,
-    Io,
+    #[error("error authentication user")]
+    Authentication,
+    #[error("user has insufficient rights")]
+    Authorisation,
+    #[error("unknown database error")]
+    Database(#[from] sqlx::Error),
+    #[error("unknown I/O error")]
+    Io(#[from] std::io::Error),
 }
 
-impl std::fmt::Display for Error {
-    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
-    }
-}
-
-impl std::error::Error for Error {}
-
-impl From<std::io::Error> for Error {
-    fn from(_: std::io::Error) -> Self {
-        Self::Io
-    }
-}
-
-impl From<sqlx::Error> for Error {
-    fn from(_: sqlx::Error) -> Self {
-        Self::DatabaseConnection
+impl ResponseError for Error {
+    fn status_code(&self) -> StatusCode {
+        match self {
+            Error::Authentication => StatusCode::UNAUTHORIZED,
+            Error::Authorisation => StatusCode::FORBIDDEN,
+            Error::Database(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Error::Io(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        }
     }
 }

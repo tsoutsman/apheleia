@@ -1,7 +1,7 @@
 [workspace]
-members = ["apheleia", "apheleia-proc"]
+members = ["apheleia", "apheleia-proc", "sbhs"]
 
 [profile.release]
-# TODO: strip = "symbols" (stabilizes on 13.1.2022)
+# strip = "symbols"
 lto = "fat"
 codegen-units = 1

@@ -23,7 +23,7 @@ impl Area {
     }
 
     fn pascal_case_name(&self) -> String {
-        self.name.replace(" ", "")
+        self.name.replace(' ', "")
     }
 
     fn normal_name(&self) -> &str {
