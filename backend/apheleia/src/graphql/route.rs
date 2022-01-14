@@ -1,4 +1,6 @@
-use crate::graphql::schema;
+use std::time::Duration;
+
+use crate::{graphql::schema, Error};
 
 use actix_web::{
     error::JsonPayloadError,
@@ -11,6 +13,9 @@ use juniper::{
     ScalarValue,
 };
 use juniper_actix::{graphiql_handler, playground_handler};
+
+// TODO: Max query depth or complexity - timeouts are pretty crude.
+const TIMEOUT: u64 = 2;
 
 // NOTE: A lot of this file is copy pasted from juniper-actix with slight modifications.
 // I need to put in a pull request as the require RootNode to have a 'static lifetime
@@ -56,7 +61,10 @@ pub(crate) async fn graphql_route(
                 }
                 _ => Err(JsonPayloadError::ContentType),
             }?;
-            let gql_batch_response = req.execute(&schema, context).await;
+            let gql_batch_response =
+                tokio::time::timeout(Duration::from_secs(TIMEOUT), req.execute(&schema, context))
+                    .await
+                    .map_err(Error::Timeout)?;
             let gql_response = serde_json::to_string(&gql_batch_response)?;
             let mut response = match gql_batch_response.is_ok() {
                 true => HttpResponse::Ok(),
@@ -67,7 +75,10 @@ pub(crate) async fn graphql_route(
         Method::GET => {
             let get_req = Query::<GetGraphQLRequest>::from_query(req.query_string())?;
             let req = GraphQLRequest::from(get_req.into_inner());
-            let gql_response = req.execute(&schema, context).await;
+            let gql_response =
+                tokio::time::timeout(Duration::from_secs(TIMEOUT), req.execute(&schema, context))
+                    .await
+                    .map_err(Error::Timeout)?;
             let body_response = serde_json::to_string(&gql_response)?;
             let mut response = match gql_response.is_ok() {
                 true => HttpResponse::Ok(),

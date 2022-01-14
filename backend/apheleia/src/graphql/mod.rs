@@ -13,8 +13,6 @@ mod util;
 pub(crate) use route::{graphiql_route, graphql_route, playground_route};
 pub(crate) use subject_area::SubjectArea;
 
-// TODO max query depth
-
 type Schema<'a> = juniper::RootNode<
     'a,
     query::Query<'a>,

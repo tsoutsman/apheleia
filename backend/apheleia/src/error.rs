@@ -12,6 +12,8 @@ pub enum Error {
     Database(#[from] sqlx::Error),
     #[error("unknown I/O error")]
     Io(#[from] std::io::Error),
+    #[error("request timed out")]
+    Timeout(#[from] tokio::time::error::Elapsed),
 }
 
 impl ResponseError for Error {
@@ -21,6 +23,7 @@ impl ResponseError for Error {
             Error::Authorisation => StatusCode::FORBIDDEN,
             Error::Database(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Error::Io(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Error::Timeout(_) => StatusCode::BAD_REQUEST,
         }
     }
 }
