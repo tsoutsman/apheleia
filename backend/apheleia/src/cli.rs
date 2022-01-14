@@ -15,7 +15,7 @@ where
         match args.command {
             Command::Sync => {
                 let pool = db::pool().await?;
-                for area in SubjectArea::iter_all() {
+                for area in SubjectArea::all() {
                     let schema_exists = db::schema_exists(area, &pool).await?;
                     if !schema_exists {
                         db::init_schema(area, &pool).await?;

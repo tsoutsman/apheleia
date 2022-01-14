@@ -1,28 +1,31 @@
 mod archetype;
 mod item;
+mod loan;
 mod mutation;
 mod query;
 mod role;
 mod route;
 mod settings;
 mod subject_area;
-
-use crate::Context;
-use mutation::Mutation;
-use query::Query;
-
-use juniper::{EmptySubscription, RootNode};
+mod user;
+mod util;
 
 pub(crate) use route::{graphiql_route, graphql_route, playground_route};
 pub(crate) use subject_area::SubjectArea;
 
-// TODO static lifetimes
-type Schema<'a> = RootNode<'a, Query<'a>, Mutation<'a>, EmptySubscription<Context<'a>>>;
+// TODO max query depth
+
+type Schema<'a> = juniper::RootNode<
+    'a,
+    query::Query<'a>,
+    mutation::Mutation<'a>,
+    juniper::EmptySubscription<crate::Context<'a>>,
+>;
 
 pub(crate) fn schema<'a>() -> Schema<'a> {
     Schema::new(
-        Query::new(),
-        Mutation::new(),
-        EmptySubscription::<Context<'a>>::new(),
+        query::Query::new(),
+        mutation::Mutation::new(),
+        juniper::EmptySubscription::<crate::Context<'a>>::new(),
     )
 }

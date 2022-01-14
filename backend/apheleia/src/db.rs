@@ -3,6 +3,8 @@ use sqlx::{
     Database, Pool, Postgres,
 };
 
+// TODO: Juniper dataloader
+
 use crate::{graphql::SubjectArea, Result};
 
 #[inline]

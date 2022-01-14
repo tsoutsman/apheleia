@@ -67,6 +67,8 @@ pub fn area_list(attr: TokenStream, item: TokenStream) -> TokenStream {
         quote! { #normal_name => ::std::result::Result::Ok(#ty) }
     });
 
+    let size = areas.len();
+
     let mut admins: HashMap<&String, Vec<String>> = HashMap::new();
     for area in &areas {
         match admins.get_mut(&area.admin) {
@@ -88,7 +90,6 @@ pub fn area_list(attr: TokenStream, item: TokenStream) -> TokenStream {
             format!(r#""{}" => {}"#, admin, areas_vec).parse().unwrap()
         });
 
-    let iter_all_len = areas.len();
     let iter_all_defs = areas.iter().map(|a| a.ty_tokens());
 
     let schema_name_pats = areas.iter().map(|a| {
@@ -119,6 +120,8 @@ pub fn area_list(attr: TokenStream, item: TokenStream) -> TokenStream {
         }
 
         impl #ident {
+            pub const SIZE: usize = #size;
+
             #[inline]
             pub fn admin_of<S>(id: S) -> ::smallvec::SmallVec<[#ident; 1]>
             where
@@ -131,7 +134,7 @@ pub fn area_list(attr: TokenStream, item: TokenStream) -> TokenStream {
             }
 
             #[inline]
-            pub fn iter_all() -> [Self; #iter_all_len] {
+            pub fn all() -> [Self; Self::SIZE] {
                 [#(#iter_all_defs),*]
             }
 

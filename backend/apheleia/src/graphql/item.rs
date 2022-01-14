@@ -1,18 +1,28 @@
-use juniper::{GraphQLEnum, GraphQLObject};
+use std::marker::PhantomData;
+
+use crate::{graphql::user::User, Context};
+
+use juniper::{graphql_object, FieldResult};
 use uuid::Uuid;
 
-#[derive(GraphQLEnum)]
-pub(crate) enum ItemsType {
-    /// Items the user has lent out to other users.
-    LentOut,
-    /// Items that have been lent to the user.
-    LentTo,
-    /// Items that the user has write access to (i.e. items that the user can lend out).
-    Subordinate,
+pub(crate) struct Item<'a> {
+    pub(crate) id: Uuid,
+    pub(crate) loaner: Uuid,
+    pub(crate) loanee: Uuid,
+    __phantom_data: PhantomData<&'a ()>,
 }
 
-#[derive(GraphQLObject)]
-pub(crate) struct Item {
-    pub(crate) id: Uuid,
-    // Some other fields
+#[graphql_object(context = Context<'a>)]
+impl<'a> Item<'a> {
+    fn id(&self) -> Uuid {
+        self.id
+    }
+
+    async fn loaner(&self, _ctx: &Context<'a>) -> FieldResult<User<'_>> {
+        todo!("populate loaner");
+    }
+
+    async fn loanee(&self, _ctx: &Context<'a>) -> FieldResult<User<'_>> {
+        todo!("populate loaner");
+    }
 }

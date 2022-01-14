@@ -3,15 +3,17 @@ use std::marker::PhantomData;
 use crate::{
     graphql::{
         archetype::Archetype,
-        item::{Item, ItemsType},
+        item::Item,
+        loan::{Loan, LoanType},
         role::Role,
         settings::Settings,
-        SubjectArea,
+        util, SubjectArea,
     },
     Context,
 };
 
 use juniper::{graphql_object, FieldResult};
+use uuid::Uuid;
 
 pub(crate) struct Query<'a>(PhantomData<&'a ()>);
 
@@ -29,31 +31,59 @@ impl<'a> Query<'a> {
 
     // User Queries
 
-    fn items(
+    async fn loans(
         _ctx: &Context<'a>,
-        _ty: ItemsType,
         _subject_areas: Option<Vec<SubjectArea>>,
-    ) -> FieldResult<Vec<Item>> {
+        _ty: LoanType,
+    ) -> FieldResult<Vec<Loan<'_>>> {
         todo!();
     }
 
-    fn settings(_ctx: &Context<'a>) -> FieldResult<Settings> {
+    async fn logs(
+        _ctx: &Context<'a>,
+        _subject_areas: Option<Vec<SubjectArea>>,
+    ) -> FieldResult<Settings> {
         todo!();
     }
 
-    fn logs(_ctx: &Context<'a>, _subject_areas: Option<Vec<SubjectArea>>) -> FieldResult<Settings> {
+    async fn settings(_ctx: &Context<'a>) -> FieldResult<Settings> {
         todo!();
     }
 
     // Privileged Queries
 
-    fn archetypes(_ctx: &Context<'a>, _subject_area: SubjectArea) -> FieldResult<Vec<Archetype>> {
+    async fn item(
+        _ctx: &Context<'a>,
+        _subject_area: SubjectArea,
+        _item: Uuid,
+    ) -> FieldResult<Item<'_>> {
+        todo!();
+    }
+
+    async fn items(
+        _ctx: &Context<'a>,
+        subject_areas: Option<Vec<SubjectArea>>,
+    ) -> FieldResult<Vec<Item<'_>>> {
+        let result = Vec::new();
+
+        for _schema in util::schemas(subject_areas) {
+            // TODO: Pagination
+            todo!();
+        }
+
+        Ok(result)
+    }
+
+    async fn archetypes(
+        _ctx: &Context<'a>,
+        _subject_area: SubjectArea,
+    ) -> FieldResult<Vec<Archetype<'_>>> {
         todo!();
     }
 
     // Admin Queries
 
-    fn roles(_ctx: &Context<'a>, _subject_area: SubjectArea) -> FieldResult<Vec<Role>> {
+    async fn roles(_ctx: &Context<'a>, _subject_area: SubjectArea) -> FieldResult<Vec<Role<'_>>> {
         todo!();
     }
 }

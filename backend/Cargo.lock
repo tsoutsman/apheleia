@@ -271,8 +271,10 @@ version = "0.1.0"
 dependencies = [
  "actix-web",
  "apheleia_proc",
+ "chrono",
  "clap",
  "futures",
+ "hashbrown",
  "juniper",
  "juniper_actix",
  "serde",
@@ -1879,6 +1881,7 @@ dependencies = [
  "bitflags",
  "byteorder",
  "bytes",
+ "chrono",
  "crc",
  "crossbeam-channel",
  "crossbeam-queue",

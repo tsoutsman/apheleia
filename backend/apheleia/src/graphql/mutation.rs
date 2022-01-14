@@ -26,77 +26,77 @@ impl<'a> Mutation<'a> {
 impl<'a> Mutation<'a> {
     // User Mutations
 
-    fn update_settings(_ctx: &Context<'a>, _input: SettingsInput) -> FieldResult<Settings> {
+    async fn update_settings(_ctx: &Context<'a>, _input: SettingsInput) -> FieldResult<Settings> {
         todo!();
     }
 
     // Privileged Mutations
 
-    fn loan_item(
+    async fn loan_item(
         _ctx: &Context<'a>,
         _subject_area: SubjectArea,
         _item_id: Uuid,
-    ) -> FieldResult<Item> {
+    ) -> FieldResult<Item<'_>> {
         todo!();
     }
 
-    fn return_item(
+    async fn return_item(
         _ctx: &Context<'a>,
         _subject_area: SubjectArea,
         _item_id: Uuid,
-    ) -> FieldResult<Item> {
+    ) -> FieldResult<Item<'_>> {
         todo!();
     }
 
-    fn create_item(
+    async fn create_item(
         _ctx: &Context<'a>,
         _subject_area: SubjectArea,
         _item_id: Uuid,
-    ) -> FieldResult<Item> {
+    ) -> FieldResult<Item<'_>> {
         todo!();
     }
 
-    fn delete_item(
+    async fn delete_item(
         _ctx: &Context<'a>,
         _subject_area: SubjectArea,
         _item_id: Uuid,
-    ) -> FieldResult<Item> {
+    ) -> FieldResult<Item<'_>> {
         todo!();
     }
 
     // TODO: Add some way to update item archetype field values.
 
-    fn create_archetype(
+    async fn create_archetype(
         _ctx: &Context<'a>,
         _subject_area: SubjectArea,
         _input: ArchetypeInput,
-    ) -> FieldResult<Archetype> {
+    ) -> FieldResult<Archetype<'_>> {
         todo!();
     }
 
-    fn update_archetype(
+    async fn update_archetype(
         _ctx: &Context<'a>,
         _subject_area: SubjectArea,
         _input: ArchetypeInput,
-    ) -> FieldResult<Archetype> {
+    ) -> FieldResult<Archetype<'_>> {
         todo!();
     }
 
     // Admin Mutations
 
-    fn create_role(
+    async fn create_role(
         _ctx: &Context<'a>,
         _subject_area: SubjectArea,
         _input: RoleInput,
-    ) -> FieldResult<Role> {
+    ) -> FieldResult<Role<'_>> {
         todo!();
     }
 
-    fn update_role(
+    async fn update_role(
         _ctx: &Context<'a>,
         _subject_area: SubjectArea,
         _input: RoleInput,
-    ) -> FieldResult<Role> {
+    ) -> FieldResult<Role<'_>> {
         todo!();
     }
 }

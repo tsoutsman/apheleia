@@ -15,6 +15,7 @@
 
 mod cli;
 mod context;
+mod db;
 mod error;
 mod extractor;
 mod graphql;
@@ -28,5 +29,3 @@ pub(crate) use serve::serve;
 
 pub(crate) type BoxFuture<T> = futures::future::BoxFuture<'static, T>;
 pub(crate) type FuncReturn = BoxFuture<std::result::Result<String, Box<dyn std::error::Error>>>;
-
-mod db;
