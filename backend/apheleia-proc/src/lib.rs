@@ -97,6 +97,9 @@ pub fn area_list(attr: TokenStream, item: TokenStream) -> TokenStream {
         quote! { #ty => #schema_name }
     });
 
+    // Inlining functions doesn't do much as they are generated within the same crate
+    // and therefore are a candidate for inling anyway but might as well.
+
     quote! {
         #(#attrs)*
         #vis enum #ident {
@@ -106,6 +109,7 @@ pub fn area_list(attr: TokenStream, item: TokenStream) -> TokenStream {
         impl ::std::convert::TryFrom<&str> for #ident {
             type Error = ();
 
+            #[inline]
             fn try_from(s: &str) -> ::std::result::Result<Self, Self::Error> {
                 match s {
                     #(#try_from_pats),*,
@@ -115,6 +119,7 @@ pub fn area_list(attr: TokenStream, item: TokenStream) -> TokenStream {
         }
 
         impl #ident {
+            #[inline]
             pub fn admin_of<S>(id: S) -> ::smallvec::SmallVec<[#ident; 1]>
             where
                 S: AsRef<str>
@@ -125,10 +130,12 @@ pub fn area_list(attr: TokenStream, item: TokenStream) -> TokenStream {
                 }
             }
 
+            #[inline]
             pub fn iter_all() -> [Self; #iter_all_len] {
                 [#(#iter_all_defs),*]
             }
 
+            #[inline]
             pub fn schema_name(&self) -> &'static str {
                 match self {
                     #(#schema_name_pats),*

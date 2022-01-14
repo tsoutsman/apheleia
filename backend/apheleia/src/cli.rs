@@ -16,18 +16,9 @@ where
             Command::Sync => {
                 let pool = db::pool().await?;
                 for area in SubjectArea::iter_all() {
-                    let schema_exists = sqlx::query(&format!(
-                        "
-SELECT schema_name FROM information_schema.schemata WHERE schema_name = '{}';
-",
-                        area.schema_name()
-                    ))
-                    .fetch_optional(&pool)
-                    .await?
-                    .is_some();
-
+                    let schema_exists = db::schema_exists(area, &pool).await?;
                     if !schema_exists {
-                        todo!("create schema");
+                        db::init_schema(area, &pool).await?;
                     }
                 }
                 Ok(())
@@ -46,7 +37,7 @@ pub(crate) struct Args {
 #[derive(Subcommand, Debug)]
 enum Command {
     // TODO: Do we delete data if a thing was removed from the config, or force them to do it
-    // manually.
+    // manually as an additional check.
     /// Sync the database with any changes made in the config
     Sync,
     /// Serve the API
