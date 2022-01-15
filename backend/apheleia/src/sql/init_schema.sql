@@ -1,42 +1,41 @@
-SET timezone = 'Australia/ACT Australia/Canberra Australia/NSW Australia/Sydney';
 
-CREATE SCHEMA {0};
+CREATE SCHEMA {schema};
 
-CREATE TABLE {0}.users(
+CREATE TABLE {schema}.entity(
+    id      integer PRIMARY KEY
+);
+
+CREATE TABLE {schema}.item(
+    id      integer PRIMARY KEY
+);
+
+CREATE TABLE {schema}.role(
     id      integer PRIMARY KEY,
+    name    varchar(255) NOT NULL
 );
 
-CREATE TABLE {0}.items(
+CREATE TABLE {schema}.archetype(
     id      integer PRIMARY KEY,
+    name    varchar(255) NOT NULL
 );
 
-CREATE TABLE {0}.roles(
-    id      integer PRIMARY KEY,
-    name    varchar(255) NOT NULL,
+CREATE TABLE {schema}.entity_role(
+    entity  integer REFERENCES {schema}.entity NOT NULL,
+    role    integer REFERENCES {schema}.role NOT NULL,
+    PRIMARY KEY (entity, role)
 );
 
-CREATE TABLE {0}.archetypes(
-    id      integer PRIMARY KEY,
-    name    varchar(255) NOT NULL,
-);
-
-CREATE TABLE {0}.user_roles(
-    user    integer REFERENCES users NOT NULL,
-    role    integer REFERENCES roles NOT NULL,
-    PRIMARY KEY (user, role),
-);
-
-CREATE TABLE {0}.loans(
+CREATE TABLE {schema}.loan(
     id              integer PRIMARY KEY,
-    item            integer REFERENCES items NOT NULL,
-    loaner          integer REFERENCES users NOT NULL,
-    loanee          integer REFERENCES users NOT NULL,
+    item            integer REFERENCES {schema}.item NOT NULL,
+    loaner          integer REFERENCES {schema}.entity NOT NULL,
+    loanee          integer REFERENCES {schema}.entity NOT NULL,
     date_loaned     timestamptz NOT NULL,
-    date_returned   timestamptz,
+    date_returned   timestamptz
 );
 
-CREATE TABLE {0}.item_archetypes(
-    item        integer REFERENCES items NOT NULL,
-    archetype   integer REFERENCES archetypes NOT NULL,
-    PRIMARY KEY (item, archetype),
+CREATE TABLE {schema}.item_archetype(
+    item        integer REFERENCES {schema}.item NOT NULL,
+    archetype   integer REFERENCES {schema}.archetype NOT NULL,
+    PRIMARY KEY (item, archetype)
 );

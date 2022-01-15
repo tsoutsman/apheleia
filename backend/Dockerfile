@@ -46,4 +46,4 @@ FROM debian:buster-slim
 # copy build artifact from build container
 COPY --from=build /build/target/release/bin /app
 
-CMD ["/app"]
+CMD ["/app", "sync"]

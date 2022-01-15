@@ -1,1 +1,1 @@
-SELECT schema_name FROM information_schema.schemata WHERE schema_name = '{0}';
+SELECT schema_name FROM information_schema.schemata WHERE schema_name = '{schema}';
