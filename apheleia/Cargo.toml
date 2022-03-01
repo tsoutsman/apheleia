@@ -7,15 +7,13 @@ edition = "2021"
 tokio = { version = "*", features = ["full"] }
 actix-web = "4.0.0-beta.14"
 futures = "*"
-juniper = "*"
-juniper_actix = "*"
 sqlx = { version = "*", features = ["runtime-tokio-rustls", "postgres", "chrono"] }
 smallvec = "*"
-apheleia_proc = { version = "*", path = "../apheleia-proc" }
 uuid = { version = "0.8", features = ["v4"] }
 thiserror = "*"
 serde_json = "*"
 serde = { version = "*", features = ["derive"] }
-clap = { version = "*", features = ["derive"] }
 hashbrown = "*"
 chrono = "*"
+log = "*"
+apheleia_proc = { path = "../apheleia-proc" }

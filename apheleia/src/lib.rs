@@ -13,16 +13,14 @@
 )]
 #![cfg_attr(not(test), deny(clippy::unwrap_used))]
 
-mod cli;
 mod context;
-mod db;
 mod error;
 mod extractor;
-mod graphql;
+mod run;
 mod serve;
 
-pub use cli::run;
 pub use error::{Error, Result};
+pub use run::run;
 
 pub(crate) use context::Context;
 pub(crate) use serve::serve;

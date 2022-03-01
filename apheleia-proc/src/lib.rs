@@ -18,12 +18,6 @@ use proc_macro::TokenStream;
 use syn::parse_macro_input;
 
 mod queries;
-mod subject_area;
-
-#[proc_macro_attribute]
-pub fn subject_area(attr: TokenStream, item: TokenStream) -> TokenStream {
-    subject_area::subject_area(attr, item)
-}
 
 #[proc_macro]
 pub fn queries(item: TokenStream) -> TokenStream {

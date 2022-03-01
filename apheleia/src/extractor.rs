@@ -1,13 +1,13 @@
 use std::sync::Arc;
 
-use crate::{graphql::SubjectArea, BoxFuture, Error, FuncReturn};
+use crate::{BoxFuture, Error, FuncReturn};
 
 use smallvec::SmallVec;
 
 #[derive(Clone, Debug)]
 pub(crate) struct User {
     pub(crate) id: String,
-    pub(crate) admin_of: SmallVec<[SubjectArea; 1]>,
+    pub(crate) admin_of: SmallVec<[i32; 1]>,
 }
 
 impl From<User> for String {
@@ -64,7 +64,8 @@ impl actix_web::FromRequest for User {
 
         let result = async move {
             let id = (f)(token).await.map_err(|_| Error::Authentication)?;
-            let admin_of = SubjectArea::admin_of(&id);
+            // TODO: do we do this to every query or only admin queries
+            let admin_of = todo!("run query to get admin status");
 
             Ok(Self { id, admin_of })
         };

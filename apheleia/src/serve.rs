@@ -1,17 +1,8 @@
 use std::{future::Future, sync::Arc};
 
-use crate::{
-    db,
-    extractor::UserConfig,
-    graphql::{graphiql_route, graphql_route, playground_route},
-    Error, FuncReturn, Result,
-};
+use crate::{extractor::UserConfig, Error, FuncReturn, Result};
 
-use actix_web::{
-    middleware,
-    web::{self, Data},
-    App, HttpServer,
-};
+use actix_web::{middleware, web::Data, App, HttpServer};
 
 /// Entry point for the server.
 ///
@@ -28,27 +19,23 @@ where
     let config = UserConfig {
         token_to_id_function: Arc::new(wrapper),
     };
-    let db_pool = db::pool().await?;
+    let db_pool = sqlx::postgres::PgPoolOptions::new()
+        .max_connections(10)
+        .connect("postgres://postgres:hunter2@db")
+        .await?;
 
     let server = HttpServer::new(move || {
         App::new()
             .app_data(Data::new(db_pool.clone()))
+            .app_data(config.clone())
             // TODO: CORS?
             .wrap(middleware::Compress::default())
             .wrap(middleware::Logger::default())
-            .service(
-                web::resource("/graphql")
-                    .route(web::get().to(graphql_route))
-                    .route(web::post().to(graphql_route))
-                    .app_data(config.clone()),
-            )
-            .service(web::resource("/playground").route(web::get().to(playground_route)))
-            .service(web::resource("/graphiql").route(web::get().to(graphiql_route)))
     })
     .bind("0.0.0.0:8000")
     .map_err(|e| -> Error { e.into() })?;
 
-    println!("Listening on: {:?}", server.addrs());
+    log::info!("Listening on: {:?}", server.addrs());
 
     server.run().await.map_err(|e| -> Error { e.into() })
 }
