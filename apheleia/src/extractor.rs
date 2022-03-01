@@ -7,7 +7,7 @@ use smallvec::SmallVec;
 #[derive(Clone, Debug)]
 pub(crate) struct User {
     pub(crate) id: String,
-    pub(crate) admin_of: SmallVec<[i32; 1]>,
+    pub(crate) admin_of: SmallVec<[u64; 1]>,
 }
 
 impl From<User> for String {

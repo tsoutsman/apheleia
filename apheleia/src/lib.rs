@@ -13,6 +13,7 @@
 )]
 #![cfg_attr(not(test), deny(clippy::unwrap_used))]
 
+mod api;
 mod context;
 mod error;
 mod extractor;

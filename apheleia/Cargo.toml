@@ -16,4 +16,3 @@ serde = { version = "*", features = ["derive"] }
 hashbrown = "*"
 chrono = "*"
 log = "*"
-apheleia_proc = { path = "../apheleia-proc" }
