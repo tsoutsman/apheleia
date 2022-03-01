@@ -8,8 +8,6 @@ pub enum Error {
     Authentication,
     #[error("user has insufficient rights")]
     Authorisation,
-    #[error("unknown database error")]
-    Database(#[from] sqlx::Error),
     #[error("unknown I/O error")]
     Io(#[from] std::io::Error),
     #[error("request timed out")]
@@ -21,7 +19,6 @@ impl ResponseError for Error {
         match self {
             Error::Authentication => StatusCode::UNAUTHORIZED,
             Error::Authorisation => StatusCode::FORBIDDEN,
-            Error::Database(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Error::Io(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Error::Timeout(_) => StatusCode::BAD_REQUEST,
         }

@@ -14,17 +14,23 @@
 #![cfg_attr(not(test), deny(clippy::unwrap_used))]
 
 mod api;
-mod context;
+mod auth;
 mod error;
-mod extractor;
-mod run;
 mod serve;
 
 pub use error::{Error, Result};
-pub use run::run;
 
-pub(crate) use context::Context;
 pub(crate) use serve::serve;
 
 pub(crate) type BoxFuture<T> = futures::future::BoxFuture<'static, T>;
-pub(crate) type FuncReturn = BoxFuture<std::result::Result<String, Box<dyn std::error::Error>>>;
+pub(crate) type FuncReturn = BoxFuture<std::result::Result<u32, Box<dyn std::error::Error>>>;
+
+pub fn run<Func, Fut>(token_to_id_function: Func) -> Result<()>
+where
+    Func: Fn(String) -> Fut + 'static + Send + Sync + Clone,
+    Fut: std::future::Future<Output = std::result::Result<u32, Box<dyn std::error::Error>>>
+        + 'static
+        + Send,
+{
+    actix_web::rt::System::new().block_on(async move { serve(token_to_id_function).await })
+}

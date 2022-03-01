@@ -7,12 +7,7 @@ edition = "2021"
 tokio = { version = "*", features = ["full"] }
 actix-web = "4.0.0-beta.14"
 futures = "*"
-sqlx = { version = "*", features = ["runtime-tokio-rustls", "postgres", "chrono"] }
-smallvec = "*"
-uuid = { version = "0.8", features = ["v4"] }
 thiserror = "*"
-serde_json = "*"
-serde = { version = "*", features = ["derive"] }
-hashbrown = "*"
-chrono = "*"
+# serde_json = "*"
+# serde = { version = "*", features = ["derive"] }
 log = "*"

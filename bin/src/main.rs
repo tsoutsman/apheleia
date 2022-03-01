@@ -12,18 +12,20 @@ pub struct JsonResponse {
 }
 
 #[inline]
-async fn sbhs_token_to_id(token: String) -> Result<String, Box<dyn std::error::Error>> {
+async fn sbhs_token_to_id(token: String) -> Result<u32, Box<dyn std::error::Error>> {
     const API_ENDPOINT: &str = "https://student.sbhs.net.au/api/details/userinfo";
 
-    let body = HTTP_CLIENT
+    let id = HTTP_CLIENT
         .get(API_ENDPOINT)
         .header("Authorization", format!("Bearer {}", token))
         .send()
         .await?
         .json::<JsonResponse>()
-        .await?;
+        .await?
+        .student_id
+        .parse();
 
-    Ok(body.student_id)
+    Ok(id)
 }
 
 fn main() -> apheleia::Result<()> {

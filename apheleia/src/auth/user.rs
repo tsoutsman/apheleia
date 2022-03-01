@@ -1,36 +1,12 @@
-use std::sync::Arc;
-
-use crate::{BoxFuture, Error, FuncReturn};
-
-use smallvec::SmallVec;
+use crate::{BoxFuture, Error};
 
 #[derive(Clone, Debug)]
-pub(crate) struct User {
-    pub(crate) id: String,
-    pub(crate) admin_of: SmallVec<[u64; 1]>,
-}
+pub(crate) struct User(u32);
 
-impl From<User> for String {
+impl From<User> for u32 {
     #[inline]
     fn from(user: User) -> Self {
-        user.id
-    }
-}
-
-#[derive(Clone)]
-pub(crate) struct UserConfig {
-    pub(crate) token_to_id_function: Arc<dyn Fn(String) -> FuncReturn + Send + Sync>,
-}
-
-impl std::fmt::Debug for UserConfig {
-    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!();
-    }
-}
-
-impl Default for UserConfig {
-    fn default() -> Self {
-        unreachable!("No ID extractor specified");
+        user.0
     }
 }
 
@@ -57,17 +33,14 @@ impl actix_web::FromRequest for User {
             // No authorization header
             None => return Box::pin(futures::future::ready(Err(Error::Authentication))),
         };
-        let f = match req.app_data::<UserConfig>() {
+        let f = match req.app_data::<crate::auth::Config>() {
             Some(f) => f.token_to_id_function.clone(),
             None => unreachable!("No ID extractor specified"),
         };
 
         let result = async move {
             let id = (f)(token).await.map_err(|_| Error::Authentication)?;
-            // TODO: do we do this to every query or only admin queries
-            let admin_of = todo!("run query to get admin status");
-
-            Ok(Self { id, admin_of })
+            Ok(Self(id))
         };
         Box::pin(result)
     }

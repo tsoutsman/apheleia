@@ -1,6 +1,6 @@
 use std::{future::Future, sync::Arc};
 
-use crate::{extractor::UserConfig, Error, FuncReturn, Result};
+use crate::{auth, Error, FuncReturn, Result};
 
 use actix_web::{middleware, web::Data, App, HttpServer};
 
@@ -13,16 +13,13 @@ use actix_web::{middleware, web::Data, App, HttpServer};
 pub(crate) async fn serve<Func, Fut>(token_to_id_function: Func) -> Result<()>
 where
     Func: Fn(String) -> Fut + 'static + Send + Sync + Clone,
-    Fut: Future<Output = std::result::Result<String, Box<dyn std::error::Error>>> + 'static + Send,
+    Fut: Future<Output = std::result::Result<u32, Box<dyn std::error::Error>>> + 'static + Send,
 {
     let wrapper = move |token| -> FuncReturn { Box::pin(token_to_id_function(token)) };
-    let config = UserConfig {
+    let config = auth::Config {
         token_to_id_function: Arc::new(wrapper),
     };
-    let db_pool = sqlx::postgres::PgPoolOptions::new()
-        .max_connections(10)
-        .connect("postgres://postgres:hunter2@db")
-        .await?;
+    let db_pool: () = todo!("db_pool");
 
     let server = HttpServer::new(move || {
         App::new()
