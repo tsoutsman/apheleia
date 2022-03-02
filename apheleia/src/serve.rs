@@ -3,6 +3,10 @@ use std::{future::Future, sync::Arc};
 use crate::{auth, Error, FuncReturn, Result};
 
 use actix_web::{middleware, web::Data, App, HttpServer};
+use diesel::{
+    pg::PgConnection,
+    r2d2::{ConnectionManager, Pool},
+};
 
 /// Entry point for the server.
 ///
@@ -19,7 +23,9 @@ where
     let config = auth::Config {
         token_to_id_function: Arc::new(wrapper),
     };
-    let db_pool: () = todo!("db_pool");
+    let manager =
+        ConnectionManager::<PgConnection>::new("postgres://username:password@localhost/db_name");
+    let db_pool = Pool::new(manager).map_err(|_| Error::R2d2)?;
 
     let server = HttpServer::new(move || {
         App::new()

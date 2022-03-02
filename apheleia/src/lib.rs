@@ -15,6 +15,7 @@
 
 mod api;
 mod auth;
+mod db;
 mod error;
 mod serve;
 
@@ -34,3 +35,10 @@ where
 {
     actix_web::rt::System::new().block_on(async move { serve(token_to_id_function).await })
 }
+
+#[macro_use]
+extern crate diesel_migrations;
+diesel_migrations::embed_migrations!("migrations");
+
+#[macro_use]
+extern crate diesel;

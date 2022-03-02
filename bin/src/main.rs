@@ -23,7 +23,7 @@ async fn sbhs_token_to_id(token: String) -> Result<u32, Box<dyn std::error::Erro
         .json::<JsonResponse>()
         .await?
         .student_id
-        .parse();
+        .parse()?;
 
     Ok(id)
 }

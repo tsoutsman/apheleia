@@ -12,6 +12,8 @@ pub enum Error {
     Io(#[from] std::io::Error),
     #[error("request timed out")]
     Timeout(#[from] tokio::time::error::Elapsed),
+    #[error("unknown database connection pool error")]
+    R2d2,
 }
 
 impl ResponseError for Error {
@@ -21,6 +23,7 @@ impl ResponseError for Error {
             Error::Authorisation => StatusCode::FORBIDDEN,
             Error::Io(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Error::Timeout(_) => StatusCode::BAD_REQUEST,
+            Error::R2d2 => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 }

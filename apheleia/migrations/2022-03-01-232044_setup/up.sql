@@ -34,7 +34,7 @@ CREATE TABLE item(
     subject_area    integer REFERENCES subject_area NOT NULL,
     note            text,
     archetype       integer REFERENCES archetype,
-    archetype_data  bytea
+    archetype_data  jsonb
 );
 
 CREATE TABLE role_permission(
