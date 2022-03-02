@@ -31,7 +31,6 @@ CREATE TABLE archetype(
 
 CREATE TABLE item(
     id              integer PRIMARY KEY,
-    subject_area    integer REFERENCES subject_area NOT NULL,
     note            text,
     archetype       integer REFERENCES archetype,
     archetype_data  jsonb
@@ -40,8 +39,10 @@ CREATE TABLE item(
 CREATE TABLE role_permission(
     role        integer REFERENCES role,
     archetype   integer REFERENCES user_id,
-    PRIMARY KEY (role, archetype)
-    -- TODO: Add granular permissions
+    PRIMARY KEY (role, archetype),
+    loan        boolean NOT NULL,
+    borrow      boolean NOT NULL,
+    modify      boolean NOT NULL
 );
 
 CREATE TABLE loan(

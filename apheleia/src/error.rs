@@ -14,6 +14,10 @@ pub enum Error {
     Timeout(#[from] tokio::time::error::Elapsed),
     #[error("unknown database connection pool error")]
     R2d2,
+    #[error("database error")]
+    Database(#[from] diesel::result::Error),
+    #[error("not found")]
+    NotFound,
 }
 
 impl ResponseError for Error {
@@ -24,6 +28,17 @@ impl ResponseError for Error {
             Error::Io(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Error::Timeout(_) => StatusCode::BAD_REQUEST,
             Error::R2d2 => StatusCode::INTERNAL_SERVER_ERROR,
+            Error::Database(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Error::NotFound => StatusCode::BAD_REQUEST,
+        }
+    }
+}
+
+impl From<tokio_diesel::AsyncError> for Error {
+    fn from(e: tokio_diesel::AsyncError) -> Self {
+        match e {
+            tokio_diesel::AsyncError::Checkout(_) => Error::R2d2,
+            tokio_diesel::AsyncError::Error(e) => e.into(),
         }
     }
 }

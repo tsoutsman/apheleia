@@ -17,9 +17,11 @@ mod api;
 mod auth;
 mod db;
 mod error;
+mod id;
 mod serve;
 
 pub use error::{Error, Result};
+pub(crate) use id::Id;
 
 pub(crate) use serve::serve;
 

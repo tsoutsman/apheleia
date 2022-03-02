@@ -14,7 +14,6 @@ pub struct Archetype {
 #[table_name = "item"]
 pub struct Item {
     pub id: i32,
-    pub subject_area: i32,
     pub note: Option<String>,
     pub archetype: Option<i32>,
     pub archetype_data: Option<serde_json::Value>,
@@ -48,6 +47,9 @@ pub struct Role {
 pub struct RolePermission {
     pub role: i32,
     pub archetype: i32,
+    pub loan: bool,
+    pub borrow: bool,
+    pub modify: bool,
 }
 
 #[derive(Clone, Queryable, Debug, Identifiable)]

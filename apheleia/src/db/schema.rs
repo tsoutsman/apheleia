@@ -10,7 +10,6 @@ table! {
 table! {
     item (id) {
         id -> Int4,
-        subject_area -> Int4,
         note -> Nullable<Text>,
         archetype -> Nullable<Int4>,
         archetype_data -> Nullable<Jsonb>,
@@ -43,6 +42,9 @@ table! {
     role_permission (role, archetype) {
         role -> Int4,
         archetype -> Int4,
+        loan -> Bool,
+        borrow -> Bool,
+        modify -> Bool,
     }
 }
 
@@ -69,7 +71,6 @@ table! {
 
 joinable!(archetype -> subject_area (subject_area));
 joinable!(item -> archetype (archetype));
-joinable!(item -> subject_area (subject_area));
 joinable!(loan -> item (item));
 joinable!(role -> subject_area (subject_area));
 joinable!(role_permission -> role (role));

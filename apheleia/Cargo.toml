@@ -14,3 +14,4 @@ diesel_migrations = "*"
 serde_json = "*"
 # serde = { version = "*", features = ["derive"] }
 log = "*"
+tokio-diesel = "*"
