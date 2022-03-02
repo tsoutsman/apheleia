@@ -5,7 +5,7 @@ use diesel::{
     Queryable,
 };
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub(crate) struct Id(pub(crate) u32);
 
 impl From<i32> for Id {

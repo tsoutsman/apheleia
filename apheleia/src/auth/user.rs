@@ -1,4 +1,11 @@
-use crate::{auth::Permission, db, BoxFuture, Error, Id};
+use crate::{
+    auth::Permission,
+    db::{
+        schema::{item, role_permission, subject_area, user_id, user_role},
+        DbPool,
+    },
+    BoxFuture, Error, Id,
+};
 
 use diesel::{ExpressionMethods, JoinOnDsl, QueryDsl};
 use tokio_diesel::AsyncRunQueryDsl;
@@ -49,12 +56,10 @@ impl actix_web::FromRequest for User {
     }
 }
 
-use crate::db::schema::{item, role_permission, user_id, user_role};
-
 impl User {
     pub(crate) async fn is_authorised(
         &self,
-        pool: &db::DbPool,
+        pool: &DbPool,
         item_id: Id,
         permission: Permission,
     ) -> crate::Result<bool> {
@@ -84,5 +89,16 @@ impl User {
                 Permission::Borrow => borrow,
                 Permission::Modify => modify,
             }))
+    }
+
+    pub(crate) async fn is_admin(&self, pool: &DbPool, subject_area_id: Id) -> crate::Result<bool> {
+        let admin_id = subject_area::table
+            // TODO: Remove this i32::from.
+            .filter(subject_area::id.eq(i32::from(subject_area_id)))
+            .select(subject_area::admin)
+            .first_async::<Id>(pool)
+            .await?;
+
+        Ok(admin_id == self.0)
     }
 }
