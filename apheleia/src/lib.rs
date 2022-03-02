@@ -15,7 +15,6 @@
 
 mod api;
 mod auth;
-mod db;
 mod error;
 mod id;
 mod serve;
@@ -44,3 +43,5 @@ diesel_migrations::embed_migrations!("migrations");
 
 #[macro_use]
 extern crate diesel;
+
+mod db;

@@ -2,10 +2,14 @@ use diesel::{
     backend::Backend,
     sql_types::Integer,
     types::{FromSql, ToSql},
-    Queryable,
+    FromSqlRow,
 };
+use serde::{Deserialize, Serialize};
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(
+    Copy, Clone, Eq, PartialEq, Hash, Debug, AsExpression, FromSqlRow, Serialize, Deserialize,
+)]
+#[sql_type = "Integer"]
 pub(crate) struct Id(pub(crate) u32);
 
 impl From<i32> for Id {
@@ -17,18 +21,6 @@ impl From<i32> for Id {
 impl From<Id> for i32 {
     fn from(v: Id) -> Self {
         i32::from_be_bytes(v.0.to_be_bytes())
-    }
-}
-
-impl<DB, ST> Queryable<ST, DB> for Id
-where
-    DB: Backend,
-    i32: Queryable<ST, DB>,
-{
-    type Row = <i32 as Queryable<ST, DB>>::Row;
-
-    fn build(row: Self::Row) -> Self {
-        i32::build(row).into()
     }
 }
 

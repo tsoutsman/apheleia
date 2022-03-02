@@ -11,7 +11,7 @@ table! {
     item (id) {
         id -> Int4,
         note -> Nullable<Text>,
-        archetype -> Nullable<Int4>,
+        archetype -> Int4,
         archetype_data -> Nullable<Jsonb>,
     }
 }
@@ -39,12 +39,14 @@ table! {
 }
 
 table! {
-    role_permission (role, archetype) {
+    role_permissions (role, archetype) {
         role -> Int4,
         archetype -> Int4,
         loan -> Bool,
         borrow -> Bool,
+        create -> Bool,
         modify -> Bool,
+        delete -> Bool,
     }
 }
 
@@ -57,14 +59,14 @@ table! {
 }
 
 table! {
-    user_id (id) {
+    user (id) {
         id -> Int4,
     }
 }
 
 table! {
-    user_role (user_id, role) {
-        user_id -> Int4,
+    user_roles (user, role) {
+        user -> Int4,
         role -> Int4,
     }
 }
@@ -73,19 +75,19 @@ joinable!(archetype -> subject_area (subject_area));
 joinable!(item -> archetype (archetype));
 joinable!(loan -> item (item));
 joinable!(role -> subject_area (subject_area));
-joinable!(role_permission -> role (role));
-joinable!(role_permission -> user_id (archetype));
-joinable!(subject_area -> user_id (admin));
-joinable!(user_role -> role (role));
-joinable!(user_role -> user_id (user_id));
+joinable!(role_permissions -> role (role));
+joinable!(role_permissions -> user (archetype));
+joinable!(subject_area -> user (admin));
+joinable!(user_roles -> role (role));
+joinable!(user_roles -> user (user));
 
 allow_tables_to_appear_in_same_query!(
     archetype,
     item,
     loan,
     role,
-    role_permission,
+    role_permissions,
     subject_area,
-    user_id,
-    user_role,
+    user,
+    user_roles,
 );

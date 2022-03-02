@@ -5,13 +5,13 @@ edition = "2021"
 
 [dependencies]
 tokio = { version = "*", features = ["full"] }
-chrono = "*"
+chrono = { version = "*", features = ["serde"] }
 actix-web = "*"
 futures = "*"
 thiserror = "*"
-diesel = { version = "*", features = ["postgres", "r2d2"] }
+diesel = { version = "*", features = ["postgres", "r2d2", "serde_json", "chrono"], default-features = false }
 diesel_migrations = "*"
 serde_json = "*"
-# serde = { version = "*", features = ["derive"] }
+serde = { version = "*", features = ["derive"] }
 log = "*"
 tokio-diesel = "*"
