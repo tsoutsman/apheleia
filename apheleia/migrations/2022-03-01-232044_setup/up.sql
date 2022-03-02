@@ -5,40 +5,40 @@ CREATE TABLE "user"(
 );
 
 CREATE TABLE subject_area(
-    id      integer PRIMARY KEY,
+    id      uuid PRIMARY KEY,
     name    varchar(255) NOT NULL,
     admin   integer REFERENCES "user" NOT NULL
 );
 
 CREATE TABLE role(
-    id              integer PRIMARY KEY,
+    id              uuid PRIMARY KEY,
     name            varchar(255) NOT NULL,
-    subject_area    integer REFERENCES subject_area NOT NULL
+    subject_area    uuid REFERENCES subject_area NOT NULL
 );
 
 CREATE TABLE user_roles(
-    "user"     integer REFERENCES "user",
-    role        integer REFERENCES role,
+    "user"      integer REFERENCES "user",
+    role        uuid REFERENCES role,
     PRIMARY KEY ("user", role)
 );
 
 CREATE TABLE archetype(
-    id              integer PRIMARY KEY,
+    id              uuid PRIMARY KEY,
     name            varchar(255) NOT NULL,
-    subject_area    integer REFERENCES subject_area NOT NULL,
+    subject_area    uuid REFERENCES subject_area NOT NULL,
     schema          text NOT NULL
 );
 
 CREATE TABLE item(
-    id              integer PRIMARY KEY,
+    id              uuid PRIMARY KEY,
     note            text,
-    archetype       integer REFERENCES archetype NOT NULL,
+    archetype       uuid REFERENCES archetype NOT NULL,
     archetype_data  jsonb
 );
 
 CREATE TABLE role_permissions(
-    role        integer REFERENCES role,
-    archetype   integer REFERENCES "user",
+    role        uuid REFERENCES role,
+    archetype   uuid REFERENCES archetype,
     PRIMARY KEY (role, archetype),
     loan        boolean NOT NULL,
     borrow      boolean NOT NULL,
@@ -48,9 +48,9 @@ CREATE TABLE role_permissions(
 );
 
 CREATE TABLE loan(
-    id                  integer PRIMARY KEY,
+    id                  uuid PRIMARY KEY,
     return_requested    boolean NOT NULL,
-    item                integer REFERENCES item NOT NULL,
+    item                uuid REFERENCES item NOT NULL,
     loaner              integer REFERENCES "user" NOT NULL,
     loanee              integer REFERENCES "user" NOT NULL,
     note                text,

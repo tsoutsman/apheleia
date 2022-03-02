@@ -4,19 +4,63 @@ use crate::{
         schema::{item, role_permissions, subject_area, user, user_roles},
         DbPool,
     },
-    BoxFuture, Error, Id,
+    id::{self, Id},
+    BoxFuture, Error,
 };
 
-use diesel::{ExpressionMethods, JoinOnDsl, QueryDsl};
+use diesel::{
+    backend::Backend,
+    sql_types::Integer,
+    types::{FromSql, ToSql},
+    ExpressionMethods, Identifiable, Insertable, JoinOnDsl, QueryDsl,
+};
+use serde::Serialize;
 use tokio_diesel::AsyncRunQueryDsl;
 
-#[derive(Clone, Debug)]
-pub(crate) struct User(Id);
+#[derive(
+    Copy,
+    Clone,
+    Eq,
+    PartialEq,
+    Hash,
+    Debug,
+    FromSqlRow,
+    Insertable,
+    AsExpression,
+    Identifiable,
+    Serialize,
+)]
+#[sql_type = "Integer"]
+#[table_name = "user"]
+pub(crate) struct User(#[column_name = "id"] i32);
 
-impl From<u32> for User {
+impl From<i32> for User {
     #[inline]
-    fn from(v: u32) -> Self {
-        Self(Id(v))
+    fn from(v: i32) -> Self {
+        Self(v)
+    }
+}
+
+impl<DB> ToSql<Integer, DB> for User
+where
+    DB: Backend,
+    i32: ToSql<Integer, DB>,
+{
+    fn to_sql<W: std::io::Write>(
+        &self,
+        out: &mut diesel::serialize::Output<'_, W, DB>,
+    ) -> diesel::serialize::Result {
+        self.0.to_sql(out)
+    }
+}
+
+impl<DB> FromSql<Integer, DB> for User
+where
+    DB: Backend,
+    i32: FromSql<Integer, DB>,
+{
+    fn from_sql(bytes: Option<&DB::RawValue>) -> diesel::deserialize::Result<Self> {
+        Ok(Self(i32::from_sql(bytes)?))
     }
 }
 
@@ -50,7 +94,8 @@ impl actix_web::FromRequest for User {
 
         let result = async move {
             let id = (f)(token).await.map_err(|_| Error::Authentication)?;
-            Ok(id.into())
+            // TODO
+            Ok(Self(id as i32))
         };
         Box::pin(result)
     }
@@ -60,13 +105,13 @@ impl User {
     pub(crate) async fn is_authorised_by_item(
         &self,
         pool: &DbPool,
-        item_id: Id,
+        item_id: Id<id::Item>,
         permission: Permission,
     ) -> crate::Result<bool> {
         let archetype_id = item::table
             .find(item_id)
             .select(item::archetype)
-            .first_async::<Id>(pool)
+            .first_async::<Id<id::Archetype>>(pool)
             .await?;
 
         self.is_authorised_by_archetype(pool, archetype_id, permission)
@@ -76,11 +121,11 @@ impl User {
     pub(crate) async fn is_authorised_by_archetype(
         &self,
         pool: &DbPool,
-        archetype_id: Id,
+        archetype_id: Id<id::Archetype>,
         permission: Permission,
     ) -> crate::Result<bool> {
         Ok(user::table
-            .find(i32::from(self.0))
+            .find(*self)
             .inner_join(user_roles::table)
             .inner_join(role_permissions::table.on(role_permissions::role.eq(user_roles::role)))
             .filter(role_permissions::archetype.eq(archetype_id))
@@ -104,13 +149,17 @@ impl User {
     }
 
     #[allow(dead_code)]
-    pub(crate) async fn is_admin(&self, pool: &DbPool, subject_area_id: Id) -> crate::Result<bool> {
+    pub(crate) async fn is_admin(
+        &self,
+        pool: &DbPool,
+        subject_area_id: Id<id::SubjectArea>,
+    ) -> crate::Result<bool> {
         let admin_id = subject_area::table
             .filter(subject_area::id.eq(subject_area_id))
             .select(subject_area::admin)
-            .first_async::<Id>(pool)
+            .first_async::<User>(pool)
             .await?;
 
-        Ok(admin_id == self.0)
+        Ok(admin_id.0 == self.0)
     }
 }

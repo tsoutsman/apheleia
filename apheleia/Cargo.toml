@@ -9,9 +9,10 @@ chrono = { version = "*", features = ["serde"] }
 actix-web = "*"
 futures = "*"
 thiserror = "*"
-diesel = { version = "*", features = ["postgres", "r2d2", "serde_json", "chrono"], default-features = false }
+diesel = { version = "*", features = ["postgres", "r2d2", "serde_json", "chrono", "uuid"], default-features = false }
 diesel_migrations = "*"
 serde_json = "*"
 serde = { version = "*", features = ["derive"] }
 log = "*"
 tokio-diesel = "*"
+uuid = { version = "0.6", features = ["v4", "serde"] }

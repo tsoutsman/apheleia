@@ -1,48 +1,70 @@
+use std::marker::PhantomData;
+
 use diesel::{
     backend::Backend,
-    sql_types::Integer,
+    sql_types,
     types::{FromSql, ToSql},
     FromSqlRow,
 };
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(
     Copy, Clone, Eq, PartialEq, Hash, Debug, AsExpression, FromSqlRow, Serialize, Deserialize,
 )]
-#[sql_type = "Integer"]
-pub(crate) struct Id(pub(crate) u32);
+#[sql_type = "diesel::sql_types::Uuid"]
+// AsExpression derive doesn't allow where clauses.
+pub(crate) struct Id<T: Sealed>(Uuid, PhantomData<T>);
 
-impl From<i32> for Id {
-    fn from(v: i32) -> Self {
-        Self(u32::from_be_bytes(v.to_be_bytes()))
+impl<T> Id<T>
+where
+    T: Sealed,
+{
+    pub(crate) fn new() -> Self {
+        Self(Uuid::new_v4(), PhantomData)
     }
 }
 
-impl From<Id> for i32 {
-    fn from(v: Id) -> Self {
-        i32::from_be_bytes(v.0.to_be_bytes())
-    }
-}
-
-impl<DB> ToSql<Integer, DB> for Id
+impl<DB, T> ToSql<sql_types::Uuid, DB> for Id<T>
 where
     DB: Backend,
-    i32: ToSql<Integer, DB>,
+    Uuid: ToSql<sql_types::Uuid, DB>,
+    T: Sealed + std::fmt::Debug,
 {
     fn to_sql<W: std::io::Write>(
         &self,
         out: &mut diesel::serialize::Output<'_, W, DB>,
     ) -> diesel::serialize::Result {
-        i32::from(*self).to_sql(out)
+        self.0.to_sql(out)
     }
 }
 
-impl<DB> FromSql<Integer, DB> for Id
+impl<DB, T> FromSql<sql_types::Uuid, DB> for Id<T>
 where
     DB: Backend,
-    i32: FromSql<Integer, DB>,
+    Uuid: FromSql<sql_types::Uuid, DB>,
+    T: Sealed,
 {
     fn from_sql(bytes: Option<&DB::RawValue>) -> diesel::deserialize::Result<Self> {
-        Ok(Self::from(i32::from_sql(bytes)?))
+        Ok(Self(Uuid::from_sql(bytes)?, PhantomData))
     }
 }
+
+pub(crate) trait Sealed: private::Private {}
+
+mod private {
+    pub(crate) trait Private {}
+}
+
+macro_rules! id_struct {
+    ($($id:ident),*$(,)?) => {
+        $(
+            #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+            pub(crate) struct $id;
+            impl private::Private for $id {}
+            impl Sealed for $id {}
+        )*
+    };
+}
+
+id_struct![SubjectArea, Role, Archetype, Item, Loan];

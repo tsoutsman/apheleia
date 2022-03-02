@@ -1,7 +1,8 @@
 use crate::{
     auth::{Permission, User},
     db::{model, schema::item, DbPool},
-    Id, Result,
+    id::{self, Id},
+    Result,
 };
 
 use actix_web::{delete, get, post, put, web, HttpResponse, Responder};
@@ -10,7 +11,11 @@ use serde::Deserialize;
 use tokio_diesel::AsyncRunQueryDsl;
 
 #[get("/items/{id}")]
-async fn get_item(item_id: web::Path<Id>, pool: web::Data<DbPool>, _: User) -> impl Responder {
+async fn get_item(
+    item_id: web::Path<Id<id::Item>>,
+    pool: web::Data<DbPool>,
+    _: User,
+) -> impl Responder {
     let item = item::table
         .find(*item_id)
         .first_async::<model::Item>(&pool)
@@ -28,7 +33,7 @@ async fn get_items(pool: web::Data<DbPool>, _: User) -> impl Responder {
 #[derive(Clone, Debug, Deserialize)]
 struct AddItemRequest {
     note: Option<String>,
-    archetype: Id,
+    archetype: Id<id::Archetype>,
     archetype_data: Option<serde_json::Value>,
 }
 
@@ -46,7 +51,7 @@ async fn add_item(
 
         let item = model::Item {
             // TODO
-            id: 1.into(),
+            id: Id::<id::Item>::new(),
             note: request.note,
             archetype: request.archetype,
             archetype_data: request.archetype_data,
@@ -58,14 +63,13 @@ async fn add_item(
             .await?;
         Result::Ok(HttpResponse::Ok())
     } else {
-        // TODO is Result::Ok correct here?
         Result::Ok(HttpResponse::Forbidden())
     }
 }
 
 #[put("/items/{id}")]
 async fn modify_item(
-    item_id: web::Path<Id>,
+    item_id: web::Path<Id<id::Item>>,
     pool: web::Data<DbPool>,
     user: User,
 ) -> impl Responder {

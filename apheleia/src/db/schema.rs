@@ -1,26 +1,26 @@
 table! {
     archetype (id) {
-        id -> Int4,
+        id -> Uuid,
         name -> Varchar,
-        subject_area -> Int4,
+        subject_area -> Uuid,
         schema -> Text,
     }
 }
 
 table! {
     item (id) {
-        id -> Int4,
+        id -> Uuid,
         note -> Nullable<Text>,
-        archetype -> Int4,
+        archetype -> Uuid,
         archetype_data -> Nullable<Jsonb>,
     }
 }
 
 table! {
     loan (id) {
-        id -> Int4,
+        id -> Uuid,
         return_requested -> Bool,
-        item -> Int4,
+        item -> Uuid,
         loaner -> Int4,
         loanee -> Int4,
         note -> Nullable<Text>,
@@ -32,16 +32,16 @@ table! {
 
 table! {
     role (id) {
-        id -> Int4,
+        id -> Uuid,
         name -> Varchar,
-        subject_area -> Int4,
+        subject_area -> Uuid,
     }
 }
 
 table! {
     role_permissions (role, archetype) {
-        role -> Int4,
-        archetype -> Int4,
+        role -> Uuid,
+        archetype -> Uuid,
         loan -> Bool,
         borrow -> Bool,
         create -> Bool,
@@ -52,7 +52,7 @@ table! {
 
 table! {
     subject_area (id) {
-        id -> Int4,
+        id -> Uuid,
         name -> Varchar,
         admin -> Int4,
     }
@@ -67,7 +67,7 @@ table! {
 table! {
     user_roles (user, role) {
         user -> Int4,
-        role -> Int4,
+        role -> Uuid,
     }
 }
 
@@ -75,8 +75,8 @@ joinable!(archetype -> subject_area (subject_area));
 joinable!(item -> archetype (archetype));
 joinable!(loan -> item (item));
 joinable!(role -> subject_area (subject_area));
+joinable!(role_permissions -> archetype (archetype));
 joinable!(role_permissions -> role (role));
-joinable!(role_permissions -> user (archetype));
 joinable!(subject_area -> user (admin));
 joinable!(user_roles -> role (role));
 joinable!(user_roles -> user (user));
