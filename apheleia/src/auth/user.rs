@@ -11,7 +11,7 @@ use diesel::{ExpressionMethods, JoinOnDsl, QueryDsl};
 use tokio_diesel::AsyncRunQueryDsl;
 
 #[derive(Clone, Debug)]
-pub(crate) struct User(pub(crate) Id);
+pub(crate) struct User(Id);
 
 impl From<u32> for User {
     #[inline]
@@ -57,7 +57,7 @@ impl actix_web::FromRequest for User {
 }
 
 impl User {
-    pub(crate) async fn is_authorised(
+    pub(crate) async fn is_authorised_by_item(
         &self,
         pool: &DbPool,
         item_id: Id,
@@ -69,6 +69,16 @@ impl User {
             .first_async::<Id>(pool)
             .await?;
 
+        self.is_authorised_by_archetype(pool, archetype_id, permission)
+            .await
+    }
+
+    pub(crate) async fn is_authorised_by_archetype(
+        &self,
+        pool: &DbPool,
+        archetype_id: Id,
+        permission: Permission,
+    ) -> crate::Result<bool> {
         Ok(user::table
             .find(i32::from(self.0))
             .inner_join(user_roles::table)

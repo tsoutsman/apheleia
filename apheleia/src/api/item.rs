@@ -39,12 +39,13 @@ async fn add_item(
     user: User,
 ) -> impl Responder {
     if user
-        .is_authorised(&pool, user.0, Permission::Create)
+        .is_authorised_by_archetype(&pool, request.archetype, Permission::Create)
         .await?
     {
         let request = request.into_inner();
 
         let item = model::Item {
+            // TODO
             id: 1.into(),
             note: request.note,
             archetype: request.archetype,
@@ -57,13 +58,25 @@ async fn add_item(
             .await?;
         Result::Ok(HttpResponse::Ok())
     } else {
+        // TODO is Result::Ok correct here?
         Result::Ok(HttpResponse::Forbidden())
     }
 }
 
 #[put("/items/{id}")]
-async fn modify_item() -> impl Responder {
-    HttpResponse::Ok()
+async fn modify_item(
+    item_id: web::Path<Id>,
+    pool: web::Data<DbPool>,
+    user: User,
+) -> impl Responder {
+    if user
+        .is_authorised_by_item(&pool, *item_id, Permission::Modify)
+        .await?
+    {
+        todo!();
+    } else {
+        Result::Ok(HttpResponse::Forbidden())
+    }
 }
 
 #[delete("/items/{id}")]
