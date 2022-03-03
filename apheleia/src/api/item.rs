@@ -20,6 +20,7 @@ async fn get_item(
         .find(*item_id)
         .first_async::<model::Item>(&pool)
         .await?;
+
     Result::Ok(HttpResponse::Ok().json(item))
 }
 
@@ -34,14 +35,14 @@ async fn get_items(pool: web::Data<DbPool>, _: User) -> impl Responder {
 struct AddItemRequest {
     note: Option<String>,
     archetype: Id<id::Archetype>,
-    archetype_data: Option<serde_json::Value>,
+    archetype_data: serde_json::Value,
 }
 
 #[post("/items")]
 async fn add_item(
     pool: web::Data<DbPool>,
-    request: web::Json<AddItemRequest>,
     user: User,
+    request: web::Json<AddItemRequest>,
 ) -> impl Responder {
     if user
         .is_authorised_by_archetype(&pool, request.archetype, Permission::Create)
@@ -79,8 +80,8 @@ struct ModifyItemRequest {
 async fn modify_item(
     item_id: web::Path<Id<id::Item>>,
     pool: web::Data<DbPool>,
-    request: web::Json<ModifyItemRequest>,
     user: User,
+    request: web::Json<ModifyItemRequest>,
 ) -> impl Responder {
     if user
         .is_authorised_by_item(&pool, *item_id, Permission::Modify)
@@ -89,7 +90,6 @@ async fn modify_item(
         let request = request.into_inner();
 
         let target = item::table.find(*item_id);
-        // This is safe: https://github.com/diesel-rs/diesel/issues/885
         diesel::update(target)
             .set(request)
             .execute_async(&pool)

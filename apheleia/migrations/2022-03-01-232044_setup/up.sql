@@ -26,14 +26,14 @@ CREATE TABLE archetype(
     id              uuid PRIMARY KEY,
     name            varchar(255) NOT NULL,
     subject_area    uuid REFERENCES subject_area NOT NULL,
-    schema          text NOT NULL
+    schema          jsonb NOT NULL
 );
 
 CREATE TABLE item(
     id              uuid PRIMARY KEY,
     note            text,
     archetype       uuid REFERENCES archetype NOT NULL,
-    archetype_data  jsonb
+    archetype_data  jsonb NOT NULL
 );
 
 CREATE TABLE role_permissions(

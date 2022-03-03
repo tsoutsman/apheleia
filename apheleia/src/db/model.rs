@@ -13,7 +13,7 @@ pub(crate) struct Archetype {
     pub(crate) id: Id<id::Archetype>,
     pub(crate) name: String,
     pub(crate) subject_area: Id<id::SubjectArea>,
-    pub(crate) schema: String,
+    pub(crate) schema: serde_json::Value,
 }
 
 #[derive(Clone, Queryable, Insertable, Debug, Identifiable, Serialize)]
@@ -22,7 +22,7 @@ pub(crate) struct Item {
     pub(crate) id: Id<id::Item>,
     pub(crate) note: Option<String>,
     pub(crate) archetype: Id<id::Archetype>,
-    pub(crate) archetype_data: Option<serde_json::Value>,
+    pub(crate) archetype_data: serde_json::Value,
 }
 
 #[derive(Clone, Queryable, Insertable, Debug, Identifiable, Serialize)]

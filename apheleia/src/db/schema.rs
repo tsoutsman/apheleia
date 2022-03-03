@@ -3,7 +3,7 @@ table! {
         id -> Uuid,
         name -> Varchar,
         subject_area -> Uuid,
-        schema -> Text,
+        schema -> Jsonb,
     }
 }
 
@@ -12,7 +12,7 @@ table! {
         id -> Uuid,
         note -> Nullable<Text>,
         archetype -> Uuid,
-        archetype_data -> Nullable<Jsonb>,
+        archetype_data -> Jsonb,
     }
 }
 

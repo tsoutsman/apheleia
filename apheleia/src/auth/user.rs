@@ -149,7 +149,7 @@ impl User {
     }
 
     #[allow(dead_code)]
-    pub(crate) async fn is_admin(
+    pub(crate) async fn is_admin_of(
         &self,
         pool: &DbPool,
         subject_area_id: Id<id::SubjectArea>,
