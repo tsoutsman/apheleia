@@ -67,23 +67,55 @@ async fn add_item(
     }
 }
 
+#[derive(Clone, Debug, Deserialize, AsChangeset)]
+#[table_name = "item"]
+struct ModifyItemRequest {
+    note: Option<String>,
+    archetype: Option<Id<id::Archetype>>,
+    archetype_data: Option<serde_json::Value>,
+}
+
 #[put("/items/{id}")]
 async fn modify_item(
     item_id: web::Path<Id<id::Item>>,
     pool: web::Data<DbPool>,
+    request: web::Json<ModifyItemRequest>,
     user: User,
 ) -> impl Responder {
     if user
         .is_authorised_by_item(&pool, *item_id, Permission::Modify)
         .await?
     {
-        todo!();
+        let request = request.into_inner();
+
+        let target = item::table.find(*item_id);
+        // This is safe: https://github.com/diesel-rs/diesel/issues/885
+        diesel::update(target)
+            .set(request)
+            .execute_async(&pool)
+            .await?;
+
+        Result::Ok(HttpResponse::Ok())
     } else {
         Result::Ok(HttpResponse::Forbidden())
     }
 }
 
 #[delete("/items/{id}")]
-async fn delete_item() -> impl Responder {
-    HttpResponse::Ok()
+async fn delete_item(
+    item_id: web::Path<Id<id::Item>>,
+    pool: web::Data<DbPool>,
+    user: User,
+) -> impl Responder {
+    if user
+        .is_authorised_by_item(&pool, *item_id, Permission::Delete)
+        .await?
+    {
+        let target = item::table.find(*item_id);
+        diesel::delete(target).execute_async(&pool).await?;
+
+        Result::Ok(HttpResponse::Ok())
+    } else {
+        Result::Ok(HttpResponse::Forbidden())
+    }
 }
