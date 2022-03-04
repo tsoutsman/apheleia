@@ -1,6 +1,6 @@
 //! Adapted from https://github.com/mehcode/tokio-diesel
 
-use crate::{Error, Result};
+use crate::{Result};
 
 use async_trait::async_trait;
 use diesel::{

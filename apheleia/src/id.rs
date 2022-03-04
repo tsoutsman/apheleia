@@ -16,7 +16,7 @@ use uuid::Uuid;
 #[derive(
     Copy, Clone, Eq, PartialEq, Hash, Debug, AsExpression, FromSqlRow, Serialize, Deserialize,
 )]
-#[sql_type = "diesel::sql_types::Uuid"]
+#[diesel(sql_type = diesel::sql_types::Uuid)]
 // AsExpression derive doesn't allow where clauses.
 pub(crate) struct Id<T: Sealed>(Uuid, PhantomData<T>);
 

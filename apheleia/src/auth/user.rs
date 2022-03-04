@@ -1,7 +1,7 @@
 use crate::{
     auth::Permission,
     db::{
-        schema::{item, role_permissions, subject_area, user, user_roles},
+        schema::{item, role_permissions, subject_area, user},
         tokio::AsyncRunQueryDsl,
         DbPool,
     },
@@ -15,7 +15,7 @@ use diesel::{
     expression::AsExpression,
     serialize::ToSql,
     sql_types::Integer,
-    ExpressionMethods, Identifiable, Insertable, JoinOnDsl, QueryDsl,
+    ExpressionMethods, Identifiable, Insertable, QueryDsl,
 };
 use serde::Serialize;
 
@@ -32,9 +32,8 @@ use serde::Serialize;
     Identifiable,
     Serialize,
 )]
-#[sql_type = "Integer"]
-#[table_name = "user"]
-pub(crate) struct User(#[column_name = "id"] i32);
+#[diesel(sql_type = Integer, table_name = user)]
+pub(crate) struct User(#[diesel(column_name = id)] i32);
 
 impl From<i32> for User {
     #[inline]
@@ -126,10 +125,8 @@ impl User {
         archetype_id: Id<id::Archetype>,
         permission: Permission,
     ) -> crate::Result<bool> {
-        Ok(user::table
-            .find(*self)
-            .inner_join(user_roles::table)
-            .inner_join(role_permissions::table.on(role_permissions::role.eq(user_roles::role)))
+        Ok(self
+            .permissions()
             .filter(role_permissions::archetype.eq(archetype_id))
             .select((
                 role_permissions::loan,
