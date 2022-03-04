@@ -2,6 +2,7 @@ use crate::{
     auth::Permission,
     db::{
         schema::{item, role_permissions, subject_area, user, user_roles},
+        tokio::AsyncRunQueryDsl,
         DbPool,
     },
     id::{self, Id},
@@ -9,13 +10,14 @@ use crate::{
 };
 
 use diesel::{
-    backend::Backend,
+    backend::{Backend, HasRawValue},
+    deserialize::{FromSql, FromSqlRow},
+    expression::AsExpression,
+    serialize::ToSql,
     sql_types::Integer,
-    types::{FromSql, ToSql},
     ExpressionMethods, Identifiable, Insertable, JoinOnDsl, QueryDsl,
 };
 use serde::Serialize;
-use tokio_diesel::AsyncRunQueryDsl;
 
 #[derive(
     Copy,
@@ -46,9 +48,9 @@ where
     DB: Backend,
     i32: ToSql<Integer, DB>,
 {
-    fn to_sql<W: std::io::Write>(
-        &self,
-        out: &mut diesel::serialize::Output<'_, W, DB>,
+    fn to_sql<'a>(
+        &'a self,
+        out: &mut diesel::serialize::Output<'a, '_, DB>,
     ) -> diesel::serialize::Result {
         self.0.to_sql(out)
     }
@@ -59,7 +61,7 @@ where
     DB: Backend,
     i32: FromSql<Integer, DB>,
 {
-    fn from_sql(bytes: Option<&DB::RawValue>) -> diesel::deserialize::Result<Self> {
+    fn from_sql(bytes: <DB as HasRawValue<'_>>::RawValue) -> diesel::deserialize::Result<Self> {
         Ok(Self(i32::from_sql(bytes)?))
     }
 }
@@ -111,7 +113,7 @@ impl User {
         let archetype_id = item::table
             .find(item_id)
             .select(item::archetype)
-            .first_async::<Id<id::Archetype>>(pool)
+            .first::<Id<id::Archetype>>(pool)
             .await?;
 
         self.is_authorised_by_archetype(pool, archetype_id, permission)
@@ -131,24 +133,23 @@ impl User {
             .filter(role_permissions::archetype.eq(archetype_id))
             .select((
                 role_permissions::loan,
-                role_permissions::borrow,
+                role_permissions::receive,
                 role_permissions::create,
                 role_permissions::modify,
                 role_permissions::delete,
             ))
-            .load_async::<(bool, bool, bool, bool, bool)>(pool)
+            .load::<(bool, bool, bool, bool, bool)>(pool)
             .await?
             .into_iter()
-            .any(|(loan, borrow, create, modify, delete)| match permission {
+            .any(|(loan, receive, create, modify, delete)| match permission {
                 Permission::Loan => loan,
-                Permission::Borrow => borrow,
+                Permission::Receive => receive,
                 Permission::Create => create,
                 Permission::Modify => modify,
                 Permission::Delete => delete,
             }))
     }
 
-    #[allow(dead_code)]
     pub(crate) async fn is_admin_of(
         &self,
         pool: &DbPool,
@@ -157,7 +158,7 @@ impl User {
         let admin_id = subject_area::table
             .filter(subject_area::id.eq(subject_area_id))
             .select(subject_area::admin)
-            .first_async::<User>(pool)
+            .first::<User>(pool)
             .await?;
 
         Ok(admin_id.0 == self.0)

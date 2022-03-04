@@ -1,10 +1,14 @@
+use crate::db::schema::archetype;
+
 use std::marker::PhantomData;
 
 use diesel::{
-    backend::Backend,
-    sql_types,
-    types::{FromSql, ToSql},
-    FromSqlRow,
+    backend::{Backend, HasRawValue},
+    deserialize::{FromSql, FromSqlRow},
+    dsl::{Find, Select},
+    expression::AsExpression,
+    serialize::ToSql,
+    sql_types, QueryDsl,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -31,9 +35,9 @@ where
     Uuid: ToSql<sql_types::Uuid, DB>,
     T: Sealed + std::fmt::Debug,
 {
-    fn to_sql<W: std::io::Write>(
-        &self,
-        out: &mut diesel::serialize::Output<'_, W, DB>,
+    fn to_sql<'a>(
+        &'a self,
+        out: &mut diesel::serialize::Output<'a, '_, DB>,
     ) -> diesel::serialize::Result {
         self.0.to_sql(out)
     }
@@ -45,7 +49,7 @@ where
     Uuid: FromSql<sql_types::Uuid, DB>,
     T: Sealed,
 {
-    fn from_sql(bytes: Option<&DB::RawValue>) -> diesel::deserialize::Result<Self> {
+    fn from_sql(bytes: <DB as HasRawValue<'_>>::RawValue) -> diesel::deserialize::Result<Self> {
         Ok(Self(Uuid::from_sql(bytes)?, PhantomData))
     }
 }
@@ -68,3 +72,11 @@ macro_rules! id_struct {
 }
 
 id_struct![SubjectArea, Role, Archetype, Item, Loan];
+
+type SubjectAreaQuery = Select<Find<archetype::table, Id<Archetype>>, archetype::subject_area>;
+
+impl Id<Archetype> {
+    pub(crate) fn subject_area(&self) -> SubjectAreaQuery {
+        archetype::table.find(*self).select(archetype::subject_area)
+    }
+}

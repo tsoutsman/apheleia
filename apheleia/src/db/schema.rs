@@ -43,7 +43,7 @@ table! {
         role -> Uuid,
         archetype -> Uuid,
         loan -> Bool,
-        borrow -> Bool,
+        receive -> Bool,
         create -> Bool,
         modify -> Bool,
         delete -> Bool,

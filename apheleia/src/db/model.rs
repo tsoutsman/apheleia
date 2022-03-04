@@ -8,7 +8,7 @@ use chrono::{offset::Utc, DateTime};
 use serde::Serialize;
 
 #[derive(Clone, Queryable, Insertable, Debug, Identifiable, Serialize)]
-#[table_name = "archetype"]
+#[diesel(table_name = archetype)]
 pub(crate) struct Archetype {
     pub(crate) id: Id<id::Archetype>,
     pub(crate) name: String,
@@ -17,7 +17,7 @@ pub(crate) struct Archetype {
 }
 
 #[derive(Clone, Queryable, Insertable, Debug, Identifiable, Serialize)]
-#[table_name = "item"]
+#[diesel(table_name = item)]
 pub(crate) struct Item {
     pub(crate) id: Id<id::Item>,
     pub(crate) note: Option<String>,
@@ -26,7 +26,7 @@ pub(crate) struct Item {
 }
 
 #[derive(Clone, Queryable, Insertable, Debug, Identifiable, Serialize)]
-#[table_name = "loan"]
+#[diesel(table_name = loan)]
 pub(crate) struct Loan {
     pub(crate) id: Id<id::Loan>,
     pub(crate) return_requested: bool,
@@ -40,7 +40,7 @@ pub(crate) struct Loan {
 }
 
 #[derive(Clone, Queryable, Insertable, Debug, Identifiable, Serialize)]
-#[table_name = "role"]
+#[diesel(table_name = role)]
 pub(crate) struct Role {
     pub(crate) id: Id<id::Role>,
     pub(crate) name: String,
@@ -48,20 +48,19 @@ pub(crate) struct Role {
 }
 
 #[derive(Copy, Clone, Queryable, Insertable, Debug, Identifiable, Serialize)]
-#[table_name = "role_permissions"]
-#[primary_key(role, archetype)]
+#[diesel(table_name = role_permissions, primary_key(role, archetype))]
 pub(crate) struct RolePermission {
     pub(crate) role: Id<id::Role>,
     pub(crate) archetype: Id<id::Archetype>,
     pub(crate) loan: bool,
-    pub(crate) borrow: bool,
+    pub(crate) receive: bool,
     pub(crate) create: bool,
     pub(crate) modify: bool,
     pub(crate) delete: bool,
 }
 
 #[derive(Clone, Queryable, Insertable, Debug, Identifiable, Serialize)]
-#[table_name = "subject_area"]
+#[diesel(table_name = subject_area)]
 pub(crate) struct SubjectArea {
     pub(crate) id: Id<id::SubjectArea>,
     pub(crate) name: String,
@@ -69,8 +68,7 @@ pub(crate) struct SubjectArea {
 }
 
 #[derive(Copy, Clone, Queryable, Insertable, Debug, Identifiable, Serialize)]
-#[table_name = "user_roles"]
-#[primary_key(user, role)]
+#[diesel(table_name = user_roles, primary_key(user, role))]
 pub(crate) struct UserRole {
     pub(crate) user: User,
     pub(crate) role: Id<id::Role>,

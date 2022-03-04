@@ -12,9 +12,11 @@
     rustdoc::broken_intra_doc_links
 )]
 #![cfg_attr(not(test), deny(clippy::unwrap_used))]
+#![recursion_limit = "512"]
 
 mod api;
 mod auth;
+mod db;
 mod error;
 mod id;
 mod serve;
@@ -37,10 +39,4 @@ where
 }
 
 #[macro_use]
-extern crate diesel_migrations;
-diesel_migrations::embed_migrations!("migrations");
-
-#[macro_use]
 extern crate diesel;
-
-mod db;

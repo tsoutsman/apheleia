@@ -25,7 +25,7 @@ where
     };
     let manager =
         ConnectionManager::<PgConnection>::new("postgres://username:password@localhost/db_name");
-    let db_pool = Pool::new(manager).map_err(|_| Error::R2d2)?;
+    let db_pool = Pool::new(manager)?;
 
     let server = HttpServer::new(move || {
         App::new()
