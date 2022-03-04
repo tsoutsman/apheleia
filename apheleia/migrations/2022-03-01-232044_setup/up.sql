@@ -40,11 +40,9 @@ CREATE TABLE role_permissions(
     role        uuid REFERENCES role,
     archetype   uuid REFERENCES archetype,
     PRIMARY KEY (role, archetype),
+    meta        boolean NOT NULL,
     loan        boolean NOT NULL,
-    receive     boolean NOT NULL,
-    "create"    boolean NOT NULL,
-    modify      boolean NOT NULL,
-    delete      boolean NOT NULL
+    receive     boolean NOT NULL
 );
 
 CREATE TABLE loan(

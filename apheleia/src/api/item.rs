@@ -44,14 +44,13 @@ async fn add_item(
     request: web::Json<AddItemRequest>,
 ) -> impl Responder {
     if user
-        .is_authorised_by_archetype(&pool, request.archetype, Permission::Create)
+        .is_authorised_by_archetype(&pool, request.archetype, Permission::Meta)
         .await?
     {
         let request = request.into_inner();
 
         let item = model::Item {
-            // TODO
-            id: Id::<id::Item>::new(),
+            id: Id::new(),
             note: request.note,
             archetype: request.archetype,
             archetype_data: request.archetype_data,
@@ -83,7 +82,7 @@ async fn modify_item(
     request: web::Json<ModifyItemRequest>,
 ) -> impl Responder {
     if user
-        .is_authorised_by_item(&pool, *item_id, Permission::Modify)
+        .is_authorised_by_item(&pool, *item_id, Permission::Meta)
         .await?
     {
         let request = request.into_inner();
@@ -105,7 +104,7 @@ async fn delete_item(
     user: User,
 ) -> impl Responder {
     if user
-        .is_authorised_by_item(&pool, *item_id, Permission::Delete)
+        .is_authorised_by_item(&pool, *item_id, Permission::Meta)
         .await?
     {
         let target = item::table.find(*item_id);

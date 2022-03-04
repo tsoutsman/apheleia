@@ -52,11 +52,9 @@ pub(crate) struct Role {
 pub(crate) struct RolePermission {
     pub(crate) role: Id<id::Role>,
     pub(crate) archetype: Id<id::Archetype>,
+    pub(crate) meta: bool,
     pub(crate) loan: bool,
     pub(crate) receive: bool,
-    pub(crate) create: bool,
-    pub(crate) modify: bool,
-    pub(crate) delete: bool,
 }
 
 #[derive(Clone, Queryable, Insertable, Debug, Identifiable, Serialize)]

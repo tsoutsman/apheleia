@@ -1,14 +1,14 @@
-use crate::db::schema::archetype;
+mod archetype;
+mod item;
 
 use std::marker::PhantomData;
 
 use diesel::{
     backend::{Backend, HasRawValue},
     deserialize::{FromSql, FromSqlRow},
-    dsl::{Find, Select},
     expression::AsExpression,
     serialize::ToSql,
-    sql_types, QueryDsl,
+    sql_types,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -72,11 +72,3 @@ macro_rules! id_struct {
 }
 
 id_struct![SubjectArea, Role, Archetype, Item, Loan];
-
-type SubjectAreaQuery = Select<Find<archetype::table, Id<Archetype>>, archetype::subject_area>;
-
-impl Id<Archetype> {
-    pub(crate) fn subject_area(&self) -> SubjectAreaQuery {
-        archetype::table.find(*self).select(archetype::subject_area)
-    }
-}

@@ -1,7 +1,7 @@
 use crate::{
     auth::Permission,
     db::{
-        schema::{item, role_permissions, subject_area, user},
+        schema::{item, role_permissions, subject_area, user, user_roles},
         tokio::AsyncRunQueryDsl,
         DbPool,
     },
@@ -12,12 +12,14 @@ use crate::{
 use diesel::{
     backend::{Backend, HasRawValue},
     deserialize::{FromSql, FromSqlRow},
+    dsl::{Eq, Find, InnerJoin, InnerJoinOn},
     expression::AsExpression,
+    query_dsl::JoinOnDsl,
     serialize::ToSql,
     sql_types::Integer,
     ExpressionMethods, Identifiable, Insertable, QueryDsl,
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(
     Copy,
@@ -31,6 +33,7 @@ use serde::Serialize;
     AsExpression,
     Identifiable,
     Serialize,
+    Deserialize,
 )]
 #[diesel(sql_type = Integer, table_name = user)]
 pub(crate) struct User(#[diesel(column_name = id)] i32);
@@ -129,21 +132,17 @@ impl User {
             .permissions()
             .filter(role_permissions::archetype.eq(archetype_id))
             .select((
+                role_permissions::meta,
                 role_permissions::loan,
                 role_permissions::receive,
-                role_permissions::create,
-                role_permissions::modify,
-                role_permissions::delete,
             ))
-            .load::<(bool, bool, bool, bool, bool)>(pool)
+            .load::<(bool, bool, bool)>(pool)
             .await?
             .into_iter()
-            .any(|(loan, receive, create, modify, delete)| match permission {
+            .any(|(meta, loan, receive)| match permission {
+                Permission::Meta => meta,
                 Permission::Loan => loan,
                 Permission::Receive => receive,
-                Permission::Create => create,
-                Permission::Modify => modify,
-                Permission::Delete => delete,
             }))
     }
 
@@ -159,5 +158,20 @@ impl User {
             .await?;
 
         Ok(admin_id.0 == self.0)
+    }
+}
+
+type Permissions = InnerJoinOn<
+    InnerJoin<Find<user::table, User>, user_roles::table>,
+    role_permissions::table,
+    Eq<user_roles::role, role_permissions::role>,
+>;
+
+impl User {
+    pub(crate) fn permissions(&self) -> Permissions {
+        user::table
+            .find(*self)
+            .inner_join(user_roles::table)
+            .inner_join(role_permissions::table.on(user_roles::role.eq(role_permissions::role)))
     }
 }

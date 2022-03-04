@@ -6,9 +6,7 @@ pub(crate) use user::User;
 
 #[allow(dead_code)]
 pub(crate) enum Permission {
+    Meta,
     Loan,
     Receive,
-    Create,
-    Modify,
-    Delete,
 }

@@ -42,11 +42,9 @@ table! {
     role_permissions (role, archetype) {
         role -> Uuid,
         archetype -> Uuid,
+        meta -> Bool,
         loan -> Bool,
         receive -> Bool,
-        create -> Bool,
-        modify -> Bool,
-        delete -> Bool,
     }
 }
 
