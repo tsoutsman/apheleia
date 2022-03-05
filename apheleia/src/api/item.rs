@@ -31,7 +31,7 @@ async fn get_items(pool: web::Data<DbPool>, _: User) -> impl Responder {
 }
 
 #[derive(Clone, Debug, Deserialize)]
-struct AddItemRequest {
+struct AddItem {
     note: Option<String>,
     archetype: Id<id::Archetype>,
     archetype_data: serde_json::Value,
@@ -41,7 +41,7 @@ struct AddItemRequest {
 async fn add_item(
     pool: web::Data<DbPool>,
     user: User,
-    request: web::Json<AddItemRequest>,
+    request: web::Json<AddItem>,
 ) -> impl Responder {
     if user
         .is_authorised_by_archetype(&pool, request.archetype, Permission::Meta)
@@ -60,6 +60,7 @@ async fn add_item(
             .values(item)
             .execute(&pool)
             .await?;
+
         Result::Ok(HttpResponse::Ok())
     } else {
         Result::Ok(HttpResponse::Forbidden())
@@ -68,7 +69,7 @@ async fn add_item(
 
 #[derive(Clone, Debug, Deserialize, AsChangeset)]
 #[diesel(table_name = item)]
-struct ModifyItemRequest {
+struct ModifyItem {
     note: Option<String>,
     archetype: Option<Id<id::Archetype>>,
     archetype_data: Option<serde_json::Value>,
@@ -79,7 +80,7 @@ async fn modify_item(
     item_id: web::Path<Id<id::Item>>,
     pool: web::Data<DbPool>,
     user: User,
-    request: web::Json<ModifyItemRequest>,
+    request: web::Json<ModifyItem>,
 ) -> impl Responder {
     if user
         .is_authorised_by_item(&pool, *item_id, Permission::Meta)

@@ -2,7 +2,6 @@
 members = ["apheleia", "bin"]
 
 [profile.release]
-# TODO: wait for 1.58 release on Docker
-# strip = "symbols"
+strip = "symbols"
 lto = "fat"
-# codegen-units = 1
+codegen-units = 1

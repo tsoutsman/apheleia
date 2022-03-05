@@ -31,7 +31,7 @@ async fn get_archetypes(pool: web::Data<DbPool>, _: User) -> impl Responder {
 }
 
 #[derive(Clone, Debug, Deserialize)]
-struct AddArchetypeRequest {
+struct AddArchetype {
     name: String,
     subject_area: Id<id::SubjectArea>,
     schema: serde_json::Value,
@@ -41,7 +41,7 @@ struct AddArchetypeRequest {
 async fn add_archetype(
     pool: web::Data<DbPool>,
     user: User,
-    request: web::Json<AddArchetypeRequest>,
+    request: web::Json<AddArchetype>,
 ) -> impl Responder {
     if user.is_admin_of(&pool, request.subject_area).await? {
         let request = request.into_inner();
@@ -65,7 +65,7 @@ async fn add_archetype(
 
 #[derive(Clone, Debug, Deserialize, AsChangeset)]
 #[diesel(table_name = archetype)]
-struct ModifyArchetypeRequest {
+struct ModifyArchetype {
     name: Option<String>,
     schema: Option<serde_json::Value>,
 }
@@ -75,7 +75,7 @@ async fn modify_archetype(
     archetype_id: web::Path<Id<id::Archetype>>,
     pool: web::Data<DbPool>,
     user: User,
-    request: web::Json<ModifyArchetypeRequest>,
+    request: web::Json<ModifyArchetype>,
 ) -> impl Responder {
     let archetype_subject_area = archetype_id.subject_area().first(&pool).await?;
     if user.is_admin_of(&pool, archetype_subject_area).await? {

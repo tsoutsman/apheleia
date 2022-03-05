@@ -1,6 +1,6 @@
 use crate::{
     db::schema::archetype,
-    id::{Archetype, Id},
+    id::{self, Id},
 };
 
 use diesel::{
@@ -8,9 +8,9 @@ use diesel::{
     QueryDsl,
 };
 
-type SubjectArea = Select<Find<archetype::table, Id<Archetype>>, archetype::subject_area>;
+type SubjectArea = Select<Find<archetype::table, Id<id::Archetype>>, archetype::subject_area>;
 
-impl Id<Archetype> {
+impl Id<id::Archetype> {
     pub(crate) fn subject_area(&self) -> SubjectArea {
         archetype::table.find(*self).select(archetype::subject_area)
     }

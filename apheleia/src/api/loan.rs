@@ -31,7 +31,7 @@ async fn get_loan(
 }
 
 #[derive(Copy, Clone, Debug, Deserialize)]
-struct GetLoansQueryParams {
+struct GetLoans {
     role: GetLoansFilter,
 }
 
@@ -46,7 +46,7 @@ enum GetLoansFilter {
 async fn get_loans(
     pool: web::Data<DbPool>,
     user: User,
-    params: web::Query<GetLoansQueryParams>,
+    params: web::Query<GetLoans>,
 ) -> impl Responder {
     Result::Ok(match params.role {
         GetLoansFilter::Loanee => {
@@ -80,7 +80,7 @@ async fn get_loans(
 }
 
 #[derive(Clone, Debug, Deserialize)]
-struct AddLoanRequest {
+struct AddLoan {
     loanee: User,
     item: Id<id::Item>,
     note: Option<String>,
@@ -91,7 +91,7 @@ struct AddLoanRequest {
 async fn add_loans(
     pool: web::Data<DbPool>,
     user: User,
-    request: web::Json<AddLoanRequest>,
+    request: web::Json<AddLoan>,
 ) -> impl Responder {
     if user
         .is_authorised_by_item(&pool, request.item, Permission::Loan)
@@ -122,19 +122,18 @@ async fn add_loans(
     }
 }
 
-#[derive(Clone, Debug, Deserialize, AsChangeset)]
-#[diesel(table_name = item)]
-struct ModifyLoanRequest {
-    note: Option<String>,
-    archetype: Option<Id<id::Archetype>>,
-    archetype_data: Option<serde_json::Value>,
-}
+// #[derive(Clone, Debug, Deserialize)]
+// #[diesel(table_name = item)]
+// struct ModifyLoan {
+//     note: Option<String>,
+//     returned: Option<bool>,
+// }
 
 #[put("/loans/{id}")]
 async fn modify_loan(// loan_id: web::Path<Id<id::Item>>,
     // pool: web::Data<DbPool>,
     // user: User,
-    // request: web::Json<ModifyLoanRequest>,
+    // request: web::Json<ModifyLoan>,
 ) -> impl Responder {
     HttpResponse::Ok()
 }
