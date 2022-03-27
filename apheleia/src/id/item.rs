@@ -8,11 +8,16 @@ use diesel::{
     QueryDsl,
 };
 
-type Archetype = Select<Find<item::table, Id<id::Item>>, item::archetype>;
+type FindQuery = Find<item::table, Id<id::Item>>;
+type ArchetypeQuery = Select<FindQuery, item::archetype>;
 
 impl Id<id::Item> {
+    pub(crate) fn find(&self) -> FindQuery {
+        item::table.find(*self)
+    }
+
     #[allow(dead_code)]
-    pub(crate) fn archetype(&self) -> Archetype {
-        item::table.find(*self).select(item::archetype)
+    pub(crate) fn archetype(&self) -> ArchetypeQuery {
+        self.find().select(item::archetype)
     }
 }

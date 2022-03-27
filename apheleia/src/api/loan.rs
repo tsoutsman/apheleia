@@ -122,20 +122,30 @@ async fn add_loans(
     }
 }
 
-// #[derive(Clone, Debug, Deserialize)]
-// #[diesel(table_name = item)]
-// struct ModifyLoan {
-//     note: Option<String>,
-//     returned: Option<bool>,
-// }
+#[derive(Clone, Debug, Deserialize)]
+#[diesel(table_name = item)]
+struct ModifyLoan {
+    note: Option<String>,
+    returned: Option<bool>,
+}
 
 #[put("/loans/{id}")]
-async fn modify_loan(// loan_id: web::Path<Id<id::Item>>,
-    // pool: web::Data<DbPool>,
-    // user: User,
-    // request: web::Json<ModifyLoan>,
+async fn modify_loan(
+    loan_id: web::Path<Id<id::Loan>>,
+    pool: web::Data<DbPool>,
+    user: User,
+    request: web::Json<ModifyLoan>,
 ) -> impl Responder {
-    HttpResponse::Ok()
+    let permissions = user.permissions();
+    let loan = loan_id.find().first::<model::Loan>(&pool).await?;
+    // if (loan.returned != request.returned)
+    //     && user
+    //         .is_authorised_by_item(loan.item, Permission::Loan)
+    //         .await?
+    // {
+    //     //
+    // }
+    Result::Ok(HttpResponse::Ok())
 }
 
 #[delete("/loans/{id}")]

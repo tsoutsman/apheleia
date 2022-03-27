@@ -12,7 +12,7 @@ use crate::{
 use diesel::{
     backend::{Backend, HasRawValue},
     deserialize::{FromSql, FromSqlRow},
-    dsl::{Eq, Find, InnerJoin, InnerJoinOn},
+    dsl::{Eq, Filter, Find, InnerJoin, InnerJoinOn},
     expression::AsExpression,
     query_dsl::JoinOnDsl,
     serialize::ToSql,
@@ -130,7 +130,7 @@ impl User {
     ) -> crate::Result<bool> {
         Ok(self
             .permissions()
-            .filter(role_permissions::archetype.eq(archetype_id))
+            .for_archetype(archetype_id)
             .select((
                 role_permissions::meta,
                 role_permissions::loan,
@@ -161,17 +161,29 @@ impl User {
     }
 }
 
-type Permissions = InnerJoinOn<
+type PermissionsQuery = InnerJoinOn<
     InnerJoin<Find<user::table, User>, user_roles::table>,
     role_permissions::table,
     Eq<user_roles::role, role_permissions::role>,
 >;
 
 impl User {
-    pub(crate) fn permissions(&self) -> Permissions {
+    pub(crate) fn permissions(&self) -> PermissionsQuery {
         user::table
             .find(*self)
             .inner_join(user_roles::table)
             .inner_join(role_permissions::table.on(user_roles::role.eq(role_permissions::role)))
     }
 }
+
+type PermissionsForArchetypeQuery =
+    Filter<PermissionsQuery, Eq<role_permissions::archetype, Id<id::Archetype>>>;
+
+// impl PermissionsQuery {
+//     pub(crate) fn for_archetype(
+//         self,
+//         archetype_id: Id<id::Archetype>,
+//     ) -> PermissionsForArchetypeQuery {
+//         self.filter(role_permissions::archetype.eq(archetype_id))
+//     }
+// }

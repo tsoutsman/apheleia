@@ -8,10 +8,15 @@ use diesel::{
     QueryDsl,
 };
 
-type SubjectArea = Select<Find<role::table, Id<id::Role>>, role::subject_area>;
+type FindQuery = Find<role::table, Id<id::Role>>;
+type SubjectAreaQuery = Select<FindQuery, role::subject_area>;
 
 impl Id<id::Role> {
-    pub(crate) fn subject_area(&self) -> SubjectArea {
-        role::table.find(*self).select(role::subject_area)
+    pub(crate) fn find(&self) -> FindQuery {
+        role::table.find(*self)
+    }
+
+    pub(crate) fn subject_area(&self) -> SubjectAreaQuery {
+        self.find().select(role::subject_area)
     }
 }

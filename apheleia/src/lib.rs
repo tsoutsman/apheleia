@@ -12,7 +12,6 @@
     rustdoc::broken_intra_doc_links
 )]
 #![cfg_attr(not(test), deny(clippy::unwrap_used))]
-#![recursion_limit = "512"]
 
 mod api;
 mod auth;
