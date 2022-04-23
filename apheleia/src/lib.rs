@@ -20,6 +20,8 @@ mod db;
 mod error;
 mod id;
 mod serve;
+#[cfg(test)]
+mod test;
 
 pub use error::{Error, Result};
 
