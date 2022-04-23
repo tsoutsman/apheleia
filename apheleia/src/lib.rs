@@ -42,3 +42,8 @@ where
 
 #[macro_use]
 extern crate diesel;
+
+#[macro_use]
+extern crate diesel_migrations;
+
+pub const MIGRATIONS: diesel_migrations::EmbeddedMigrations = embed_migrations!("./migrations");

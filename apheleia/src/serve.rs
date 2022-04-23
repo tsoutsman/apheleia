@@ -7,6 +7,7 @@ use diesel::{
     pg::PgConnection,
     r2d2::{ConnectionManager, Pool},
 };
+use diesel_migrations::MigrationHarness;
 
 /// Entry point for the server.
 ///
@@ -26,6 +27,14 @@ where
     let manager =
         ConnectionManager::<PgConnection>::new("postgres://username:password@localhost/db_name");
     let db_pool = Pool::new(manager)?;
+
+    let mut conn = db_pool.get()?;
+    tokio::task::block_in_place(|| -> Result<()> {
+        conn.run_pending_migrations(crate::MIGRATIONS)
+            .map_err(|_| Error::Migration)?;
+        Ok(())
+    })?;
+    drop(conn);
 
     let server = HttpServer::new(move || {
         App::new()
