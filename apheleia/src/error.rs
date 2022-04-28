@@ -16,8 +16,6 @@ pub enum Error {
     R2d2(#[from] r2d2::Error),
     #[error("database error")]
     Database(#[from] diesel::result::Error),
-    #[error("not found")]
-    NotFound,
     #[error("error occured during database migration")]
     Migration,
 }
@@ -30,8 +28,10 @@ impl ResponseError for Error {
             Error::Io(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Error::Timeout(_) => StatusCode::BAD_REQUEST,
             Error::R2d2(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            Error::Database(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            Error::NotFound => StatusCode::BAD_REQUEST,
+            Error::Database(e) => match e {
+                diesel::result::Error::NotFound => StatusCode::NOT_FOUND,
+                _ => StatusCode::INTERNAL_SERVER_ERROR,
+            },
             Error::Migration => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }

@@ -1,21 +1,26 @@
 // Adapted from https://github.com/diesel-rs/diesel/issues/1549#issuecomment-892978784
 
-use crate::db::{tokio::AsyncRunQueryDsl, DbPool};
+use crate::{
+    auth::Config,
+    db::{tokio::AsyncRunQueryDsl, DbPool},
+};
 
 use diesel::{
     pg::PgConnection,
     query_dsl::methods::ExecuteDsl,
     r2d2::{ConnectionManager, Pool},
-    sql_query,
+    sql_query, Connection,
 };
 use diesel_migrations::MigrationHarness;
 use std::sync::atomic::AtomicU32;
+use url::Url;
 
 static TEST_DB_COUNTER: AtomicU32 = AtomicU32::new(0);
 
 pub(crate) struct TestDbPool {
     name: String,
     pool: DbPool,
+    postgres_url: Url,
     leak: bool,
 }
 
@@ -27,12 +32,12 @@ impl TestDbPool {
             TEST_DB_COUNTER.fetch_add(1, std::sync::atomic::Ordering::SeqCst)
         );
 
-        let mut db_url = url::Url::parse(
+        let postgres_url = Url::parse(
             &std::env::var("DATABASE_URL")
                 .map_err(|_| "DATABASE_URL environment variable not set")?,
         )
         .map_err(|_| "failed to parse DATABASE_URL")?;
-        let manager = ConnectionManager::<PgConnection>::new(db_url.clone());
+        let manager = ConnectionManager::<PgConnection>::new(postgres_url.clone());
         let pool = Pool::new(manager).map_err(|_| "failed to create connection pool")?;
 
         sql_query(format!("CREATE DATABASE {};", name))
@@ -40,6 +45,7 @@ impl TestDbPool {
             .await
             .map_err(|_| "failed to create database")?;
 
+        let mut db_url = postgres_url.clone();
         db_url.set_path(&name);
         let manager = ConnectionManager::<PgConnection>::new(db_url);
         let pool = Pool::new(manager).map_err(|_| "failed to create connection pool")?;
@@ -58,7 +64,8 @@ impl TestDbPool {
         Ok(Self {
             name,
             pool,
-            leak: false,
+            postgres_url,
+            leak: true,
         })
     }
 
@@ -66,8 +73,8 @@ impl TestDbPool {
         self.pool.clone()
     }
 
-    pub(crate) fn leak(&mut self) {
-        self.leak = true;
+    pub(crate) fn unleak(&mut self) {
+        self.leak = false;
     }
 }
 
@@ -78,16 +85,24 @@ impl Drop for TestDbPool {
             return;
         }
 
-        let mut conn = self.pool.get().expect("failed to connect to database");
+        let mut conn = PgConnection::establish(&self.postgres_url.to_string())
+            .expect("failed to connect to database");
         ExecuteDsl::execute(
-            sql_query(format!(
-                "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '{}'",
-                self.name
-            )),
+            sql_query(format!("DROP DATABASE {} WITH (FORCE)", self.name)),
             &mut conn,
         )
-        .expect("failed to select database to drop");
-        ExecuteDsl::execute(sql_query(format!("DROP DATABASE {}", self.name)), &mut conn)
-            .expect("failed to drop database");
+        .expect("failed to drop database");
     }
+}
+
+pub(crate) fn gen_config() -> crate::auth::Config {
+    Config {
+        token_to_id_function: std::sync::Arc::new(move |token| -> crate::FuncReturn {
+            Box::pin(test_token_to_id(token))
+        }),
+    }
+}
+
+async fn test_token_to_id(token: String) -> Result<u32, Box<dyn std::error::Error>> {
+    token.parse().map_err(|e: std::num::ParseIntError| e.into())
 }

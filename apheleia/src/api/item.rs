@@ -119,12 +119,11 @@ async fn delete_item(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::test::TestDbPool;
 
     #[tokio::test(flavor = "multi_thread")]
     async fn item() {
         let mut pool = TestDbPool::new().await.expect("failed to create db pool");
-        pool.leak();
+        pool.unleak();
     }
 }
