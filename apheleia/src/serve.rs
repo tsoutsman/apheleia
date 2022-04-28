@@ -1,6 +1,9 @@
 use std::{future::Future, sync::Arc};
 
-use crate::{auth, Error, FuncReturn, Result};
+use crate::{
+    auth::{self, Root},
+    Error, FuncReturn, Result,
+};
 
 use actix_web::{middleware, web::Data, App, HttpServer};
 use diesel::{
@@ -15,7 +18,7 @@ use diesel_migrations::MigrationHarness;
 /// unverified token into some verified ID. For example, an OAuth access token
 /// into a user ID.
 #[inline]
-pub(crate) async fn serve<Func, Fut>(token_to_id_function: Func) -> Result<()>
+pub(crate) async fn serve<Func, Fut>(token_to_id_function: Func, root: Root) -> Result<()>
 where
     Func: Fn(String) -> Fut + 'static + Send + Sync + Clone,
     Fut: Future<Output = std::result::Result<u32, Box<dyn std::error::Error>>> + 'static + Send,
@@ -39,6 +42,7 @@ where
     let server = HttpServer::new(move || {
         App::new()
             .app_data(Data::new(db_pool.clone()))
+            .app_data(Data::new(root))
             .app_data(config.clone())
             // TODO: CORS?
             .wrap(middleware::Compress::default())

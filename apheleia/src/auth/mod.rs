@@ -10,3 +10,6 @@ pub(crate) enum Permission {
     Loan,
     Receive,
 }
+
+#[derive(Copy, Clone, Debug)]
+pub struct Root(pub i32);

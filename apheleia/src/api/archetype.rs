@@ -45,7 +45,6 @@ async fn add_archetype(
 ) -> impl Responder {
     if user.is_admin_of(&pool, request.subject_area).await? {
         let request = request.into_inner();
-
         let archetype = model::Archetype {
             id: Id::<id::Archetype>::new(),
             name: request.name,
@@ -80,7 +79,6 @@ async fn modify_archetype(
     let archetype_subject_area = archetype_id.subject_area().first(&pool).await?;
     if user.is_admin_of(&pool, archetype_subject_area).await? {
         let request = request.into_inner();
-
         let target = archetype::table.find(*archetype_id);
         // This is safe: https://github.com/diesel-rs/diesel/issues/885
         diesel::update(target).set(request).execute(&pool).await?;

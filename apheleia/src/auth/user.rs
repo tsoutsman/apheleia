@@ -159,6 +159,10 @@ impl User {
 
         Ok(admin_id.0 == self.0)
     }
+
+    pub(crate) fn is_root(&self, root: crate::auth::Root) -> bool {
+        self.0 == root.0
+    }
 }
 
 type Permissions = InnerJoinOn<

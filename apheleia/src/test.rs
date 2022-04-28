@@ -95,6 +95,8 @@ impl Drop for TestDbPool {
     }
 }
 
+// pub(crate) struct TestApp();
+
 pub(crate) fn gen_config() -> crate::auth::Config {
     Config {
         token_to_id_function: std::sync::Arc::new(move |token| -> crate::FuncReturn {

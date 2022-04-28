@@ -23,6 +23,7 @@ mod serve;
 #[cfg(test)]
 mod test;
 
+pub use crate::auth::Root;
 pub use error::{Error, Result};
 
 pub(crate) use serve::serve;
@@ -30,14 +31,14 @@ pub(crate) use serve::serve;
 pub(crate) type BoxFuture<T> = futures::future::BoxFuture<'static, T>;
 pub(crate) type FuncReturn = BoxFuture<std::result::Result<u32, Box<dyn std::error::Error>>>;
 
-pub fn run<Func, Fut>(token_to_id_function: Func) -> Result<()>
+pub fn run<Func, Fut>(token_to_id_function: Func, root: Root) -> Result<()>
 where
     Func: Fn(String) -> Fut + 'static + Send + Sync + Clone,
     Fut: std::future::Future<Output = std::result::Result<u32, Box<dyn std::error::Error>>>
         + 'static
         + Send,
 {
-    actix_web::rt::System::new().block_on(async move { serve(token_to_id_function).await })
+    actix_web::rt::System::new().block_on(async move { serve(token_to_id_function, root).await })
 }
 
 #[macro_use]

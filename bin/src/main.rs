@@ -29,5 +29,5 @@ async fn sbhs_token_to_id(token: String) -> Result<u32, Box<dyn std::error::Erro
 }
 
 fn main() -> apheleia::Result<()> {
-    apheleia::run(sbhs_token_to_id)
+    apheleia::run(sbhs_token_to_id, apheleia::Root(436898703))
 }
