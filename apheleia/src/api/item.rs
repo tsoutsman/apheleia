@@ -123,7 +123,6 @@ mod tests {
 
     #[tokio::test(flavor = "multi_thread")]
     async fn test_item() {
-        let mut pool = TestDbPool::new().await.expect("failed to create db pool");
-        pool.unleak();
+        let _pool = TestDbPool::new().await.expect("failed to create db pool");
     }
 }

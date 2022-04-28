@@ -42,7 +42,7 @@ mod tests {
 
     #[tokio::test(flavor = "multi_thread")]
     async fn test_user() {
-        let mut pool = TestDbPool::new().await.expect("failed to create db pool");
+        let pool = TestDbPool::new().await.expect("failed to create db pool");
         let app = test::init_service(
             App::new()
                 .app_data(Data::new(pool.pool()))
@@ -94,7 +94,5 @@ mod tests {
             .to_request();
         let resp = test::call_service(&app, req).await;
         assert!(resp.status() == 200);
-
-        pool.unleak();
     }
 }

@@ -65,7 +65,7 @@ impl TestDbPool {
             name,
             pool,
             postgres_url,
-            leak: true,
+            leak: false,
         })
     }
 
@@ -73,14 +73,15 @@ impl TestDbPool {
         self.pool.clone()
     }
 
-    pub(crate) fn unleak(&mut self) {
+    #[allow(dead_code)]
+    pub(crate) fn leak(&mut self) {
         self.leak = false;
     }
 }
 
 impl Drop for TestDbPool {
     fn drop(&mut self) {
-        if self.leak {
+        if self.leak || std::thread::panicking() {
             log::warn!("leaking test database: {}", self.name);
             return;
         }
