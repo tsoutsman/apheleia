@@ -75,6 +75,7 @@ impl actix_web::FromRequest for User {
 
     #[inline]
     fn from_request(req: &actix_web::HttpRequest, _: &mut actix_web::dev::Payload) -> Self::Future {
+        println!("HELLO");
         let token = match req.headers().get("Authorization") {
             Some(t) => match t.to_str() {
                 Ok(t) => {

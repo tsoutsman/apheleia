@@ -25,9 +25,9 @@ pub(crate) fn config(cfg: &mut web::ServiceConfig) {
 
 #[get("/loans/{id}")]
 async fn get_loan(
+    _: User,
     loan_id: web::Path<Id<id::Item>>,
     pool: web::Data<DbPool>,
-    _: User,
 ) -> impl Responder {
     // TODO: Should everyone have access to loan.
     let loan = loan::table
@@ -52,9 +52,9 @@ enum GetLoansFilter {
 
 #[get("/loans")]
 async fn get_loans(
-    pool: web::Data<DbPool>,
     user: User,
     params: web::Query<GetLoans>,
+    pool: web::Data<DbPool>,
 ) -> impl Responder {
     Result::Ok(match params.role {
         GetLoansFilter::Loanee => {
@@ -97,9 +97,9 @@ struct AddLoan {
 
 #[post("/loans")]
 async fn add_loan(
-    pool: web::Data<DbPool>,
     user: User,
     request: web::Json<AddLoan>,
+    pool: web::Data<DbPool>,
 ) -> impl Responder {
     if user
         .is_authorised_by_item(&pool, request.item, Permission::Loan)
@@ -138,11 +138,7 @@ async fn add_loan(
 // }
 
 #[put("/loans/{id}")]
-async fn modify_loan(// loan_id: web::Path<Id<id::Item>>,
-    // pool: web::Data<DbPool>,
-    // user: User,
-    // request: web::Json<ModifyLoan>,
-) -> impl Responder {
+async fn modify_loan() -> impl Responder {
     HttpResponse::Ok()
 }
 

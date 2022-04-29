@@ -19,9 +19,9 @@ pub(crate) fn config(cfg: &mut web::ServiceConfig) {
 
 #[get("/roles/{id}")]
 async fn get_role(
+    _: User,
     role_id: web::Path<Id<id::Role>>,
     pool: web::Data<DbPool>,
-    _: User,
 ) -> impl Responder {
     let role = role::table
         .find(*role_id)
@@ -46,9 +46,9 @@ struct AddRole {
 
 #[post("/roles")]
 async fn add_role(
-    pool: web::Data<DbPool>,
     user: User,
     request: web::Json<AddRole>,
+    pool: web::Data<DbPool>,
 ) -> impl Responder {
     if user.is_admin_of(&pool, request.subject_area).await? {
         let request = request.into_inner();
@@ -79,10 +79,10 @@ struct ModifyRole {
 
 #[put("/roles/{id}")]
 async fn modify_role(
-    role_id: web::Path<Id<id::Role>>,
-    pool: web::Data<DbPool>,
     user: User,
+    role_id: web::Path<Id<id::Role>>,
     request: web::Json<ModifyRole>,
+    pool: web::Data<DbPool>,
 ) -> impl Responder {
     let role_subject_area = role_id.subject_area().first(&pool).await?;
     if user.is_admin_of(&pool, role_subject_area).await? {
@@ -100,9 +100,9 @@ async fn modify_role(
 
 #[delete("/roles/{id}")]
 async fn delete_role(
+    user: User,
     role_id: web::Path<Id<id::Role>>,
     pool: web::Data<DbPool>,
-    user: User,
 ) -> impl Responder {
     let role_subject_area = role_id.subject_area().first(&pool).await?;
     if user.is_admin_of(&pool, role_subject_area).await? {

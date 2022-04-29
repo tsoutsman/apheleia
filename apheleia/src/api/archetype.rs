@@ -19,9 +19,9 @@ pub(crate) fn config(cfg: &mut web::ServiceConfig) {
 
 #[get("/archetypes/{id}")]
 async fn get_archetype(
+    _: User,
     archetype_id: web::Path<Id<id::Archetype>>,
     pool: web::Data<DbPool>,
-    _: User,
 ) -> impl Responder {
     let archetype = archetype::table
         .find(*archetype_id)
@@ -47,9 +47,9 @@ struct AddArchetype {
 
 #[post("/archetypes")]
 async fn add_archetype(
-    pool: web::Data<DbPool>,
     user: User,
     request: web::Json<AddArchetype>,
+    pool: web::Data<DbPool>,
 ) -> impl Responder {
     if user.is_admin_of(&pool, request.subject_area).await? {
         let request = request.into_inner();
@@ -79,10 +79,10 @@ struct ModifyArchetype {
 
 #[put("/archetypes/{id}")]
 async fn modify_archetype(
-    archetype_id: web::Path<Id<id::Archetype>>,
-    pool: web::Data<DbPool>,
     user: User,
+    archetype_id: web::Path<Id<id::Archetype>>,
     request: web::Json<ModifyArchetype>,
+    pool: web::Data<DbPool>,
 ) -> impl Responder {
     let archetype_subject_area = archetype_id.subject_area().first(&pool).await?;
     if user.is_admin_of(&pool, archetype_subject_area).await? {
@@ -98,9 +98,9 @@ async fn modify_archetype(
 
 #[delete("/archetypes/{id}")]
 async fn delete_archetype(
+    user: User,
     archetype_id: web::Path<Id<id::Archetype>>,
     pool: web::Data<DbPool>,
-    user: User,
 ) -> impl Responder {
     let archetype_subject_area = archetype_id.subject_area().first(&pool).await?;
     if user.is_admin_of(&pool, archetype_subject_area).await? {

@@ -10,25 +10,28 @@ use diesel::QueryDsl;
 use serde::Deserialize;
 
 pub(crate) fn config(cfg: &mut web::ServiceConfig) {
-    cfg.service(get_item).service(get_items).service(add_item).service(modify_item).service(delete_item);
+    cfg.service(get_item)
+        .service(get_items)
+        .service(add_item)
+        .service(modify_item)
+        .service(delete_item);
 }
 
 #[get("/items/{id}")]
 async fn get_item(
+    _: User,
     item_id: web::Path<Id<id::Item>>,
     pool: web::Data<DbPool>,
-    _: User,
 ) -> impl Responder {
     let item = item::table
         .find(*item_id)
         .first::<model::Item>(&pool)
         .await?;
-
     Result::Ok(HttpResponse::Ok().json(item))
 }
 
 #[get("/items")]
-async fn get_items(pool: web::Data<DbPool>, _: User) -> impl Responder {
+async fn get_items(_: User, pool: web::Data<DbPool>) -> impl Responder {
     // TODO: Pagination
     let items = item::table.load::<model::Item>(&pool).await?;
     Result::Ok(HttpResponse::Ok().json(items))
@@ -43,9 +46,9 @@ struct AddItem {
 
 #[post("/items")]
 async fn add_item(
-    pool: web::Data<DbPool>,
     user: User,
     request: web::Json<AddItem>,
+    pool: web::Data<DbPool>,
 ) -> impl Responder {
     if user
         .is_authorised_by_archetype(&pool, request.archetype, Permission::Meta)
@@ -81,10 +84,10 @@ struct ModifyItem {
 
 #[put("/items/{id}")]
 async fn modify_item(
-    item_id: web::Path<Id<id::Item>>,
-    pool: web::Data<DbPool>,
     user: User,
+    item_id: web::Path<Id<id::Item>>,
     request: web::Json<ModifyItem>,
+    pool: web::Data<DbPool>,
 ) -> impl Responder {
     if user
         .is_authorised_by_item(&pool, *item_id, Permission::Meta)
@@ -104,9 +107,9 @@ async fn modify_item(
 
 #[delete("/items/{id}")]
 async fn delete_item(
+    user: User,
     item_id: web::Path<Id<id::Item>>,
     pool: web::Data<DbPool>,
-    user: User,
 ) -> impl Responder {
     if user
         .is_authorised_by_item(&pool, *item_id, Permission::Meta)

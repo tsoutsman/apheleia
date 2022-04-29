@@ -18,8 +18,9 @@ use uuid::Uuid;
     Copy, Clone, Eq, PartialEq, Hash, Debug, AsExpression, FromSqlRow, Serialize, Deserialize,
 )]
 #[diesel(sql_type = diesel::sql_types::Uuid)]
+#[serde(transparent)]
 // AsExpression derive doesn't allow where clauses.
-pub(crate) struct Id<T: Sealed>(Uuid, PhantomData<T>);
+pub(crate) struct Id<T: Sealed>(Uuid, #[serde(skip)] PhantomData<T>);
 
 impl<T> Id<T>
 where

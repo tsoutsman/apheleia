@@ -125,6 +125,7 @@ pub(crate) async fn init_test_service() -> (
             actix_web::App::new()
                 .app_data(actix_web::web::Data::new(pool.pool()))
                 .app_data(gen_config())
+                .app_data(actix_web::web::Data::new(crate::auth::Root(0)))
                 .configure(crate::api::config),
         )
         .await,

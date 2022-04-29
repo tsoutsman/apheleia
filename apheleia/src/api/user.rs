@@ -12,7 +12,7 @@ pub(crate) fn config(cfg: &mut web::ServiceConfig) {
 }
 
 #[get("/users/{id}")]
-async fn get_user(user_id: web::Path<User>, pool: web::Data<DbPool>, _: User) -> impl Responder {
+async fn get_user(_: User, user_id: web::Path<User>, pool: web::Data<DbPool>) -> impl Responder {
     let user = user::table
         .find(*user_id)
         .select(user::id)
@@ -22,7 +22,7 @@ async fn get_user(user_id: web::Path<User>, pool: web::Data<DbPool>, _: User) ->
 }
 
 #[post("/users")]
-async fn add_user(pool: web::Data<DbPool>, user: User) -> impl Responder {
+async fn add_user(user: User, pool: web::Data<DbPool>) -> impl Responder {
     // FIXME: What if user already exists?
     // TODO: Get and verify invite link.
 
@@ -41,16 +41,21 @@ mod tests {
     };
 
     #[tokio::test(flavor = "multi_thread")]
-    async fn test_user() {
+    async fn test_unauthenticated_user_access() {
         let (app, _pool) = crate::test::init_test_service().await;
-
-        let req = TestRequest::post().uri("/users").to_request();
-        let resp = test::call_service(&app, req).await;
-        assert_eq!(resp.status(), 401);
 
         let req = TestRequest::get().uri("/users/1234").to_request();
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), 401);
+
+        let req = TestRequest::post().uri("/users").to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 401);
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn test_user() {
+        let (app, _pool) = crate::test::init_test_service().await;
 
         let req = TestRequest::get()
             .uri("/users/1234")
