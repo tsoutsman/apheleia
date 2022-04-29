@@ -54,7 +54,7 @@ mod tests {
     }
 
     #[tokio::test(flavor = "multi_thread")]
-    async fn test_user() {
+    async fn test_user_access() {
         let (app, _pool) = crate::test::init_test_service().await;
 
         let req = TestRequest::get()

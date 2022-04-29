@@ -31,6 +31,15 @@ where
     }
 }
 
+impl<T> std::fmt::Display for Id<T>
+where
+    T: Sealed,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0.to_string())
+    }
+}
+
 impl<DB, T> ToSql<sql_types::Uuid, DB> for Id<T>
 where
     DB: Backend,

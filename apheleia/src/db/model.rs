@@ -58,6 +58,7 @@ pub(crate) struct RolePermission {
 }
 
 #[derive(Clone, Queryable, Insertable, Debug, Identifiable, Serialize)]
+#[cfg_attr(test, derive(Eq, PartialEq, serde::Deserialize))]
 #[diesel(table_name = subject_area)]
 pub(crate) struct SubjectArea {
     pub(crate) id: Id<id::SubjectArea>,

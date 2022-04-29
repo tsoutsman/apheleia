@@ -75,7 +75,6 @@ impl actix_web::FromRequest for User {
 
     #[inline]
     fn from_request(req: &actix_web::HttpRequest, _: &mut actix_web::dev::Payload) -> Self::Future {
-        println!("HELLO");
         let token = match req.headers().get("Authorization") {
             Some(t) => match t.to_str() {
                 Ok(t) => {
@@ -157,7 +156,6 @@ impl User {
             .select(subject_area::admin)
             .first::<User>(pool)
             .await?;
-
         Ok(admin_id.0 == self.0)
     }
 

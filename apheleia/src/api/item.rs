@@ -129,7 +129,7 @@ mod tests {
     use crate::test::TestDbPool;
 
     #[tokio::test(flavor = "multi_thread")]
-    async fn test_item() {
+    async fn test_item_access() {
         let _pool = TestDbPool::new().await.expect("failed to create db pool");
     }
 }
