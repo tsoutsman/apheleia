@@ -44,9 +44,9 @@ where
             .app_data(Data::new(db_pool.clone()))
             .app_data(Data::new(root))
             .app_data(config.clone())
-            // TODO: CORS?
             .wrap(middleware::Compress::default())
             .wrap(middleware::Logger::default())
+            .configure(crate::api::config)
     })
     .bind("0.0.0.0:8000")
     .map_err(|e| -> Error { e.into() })?;

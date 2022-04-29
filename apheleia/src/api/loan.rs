@@ -15,6 +15,14 @@ use chrono::{DateTime, Utc};
 use diesel::{query_dsl::JoinOnDsl, ExpressionMethods, QueryDsl};
 use serde::Deserialize;
 
+pub(crate) fn config(cfg: &mut web::ServiceConfig) {
+    cfg.service(get_loan)
+        .service(get_loans)
+        .service(add_loan)
+        .service(modify_loan)
+        .service(delete_loan);
+}
+
 #[get("/loans/{id}")]
 async fn get_loan(
     loan_id: web::Path<Id<id::Item>>,
@@ -88,7 +96,7 @@ struct AddLoan {
 }
 
 #[post("/loans")]
-async fn add_loans(
+async fn add_loan(
     pool: web::Data<DbPool>,
     user: User,
     request: web::Json<AddLoan>,

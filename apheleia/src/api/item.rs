@@ -9,6 +9,10 @@ use actix_web::{delete, get, post, put, web, HttpResponse, Responder};
 use diesel::QueryDsl;
 use serde::Deserialize;
 
+pub(crate) fn config(cfg: &mut web::ServiceConfig) {
+    cfg.service(get_item).service(get_items).service(add_item).service(modify_item).service(delete_item);
+}
+
 #[get("/items/{id}")]
 async fn get_item(
     item_id: web::Path<Id<id::Item>>,

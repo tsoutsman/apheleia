@@ -7,6 +7,10 @@ use crate::{
 use actix_web::{get, post, web, HttpResponse, Responder};
 use diesel::QueryDsl;
 
+pub(crate) fn config(cfg: &mut web::ServiceConfig) {
+    cfg.service(get_user).service(add_user);
+}
+
 #[get("/users/{id}")]
 async fn get_user(user_id: web::Path<User>, pool: web::Data<DbPool>, _: User) -> impl Responder {
     let user = user::table
@@ -31,68 +35,56 @@ async fn add_user(pool: web::Data<DbPool>, user: User) -> impl Responder {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::test::{gen_config, TestDbPool};
     use actix_web::{
         http::header,
         test::{self, TestRequest},
-        web::Data,
-        App,
     };
 
     #[tokio::test(flavor = "multi_thread")]
     async fn test_user() {
-        let pool = TestDbPool::new().await.expect("failed to create db pool");
-        let app = test::init_service(
-            App::new()
-                .app_data(Data::new(pool.pool()))
-                .app_data(gen_config())
-                .service(get_user)
-                .service(add_user),
-        )
-        .await;
+        let (app, _pool) = crate::test::init_test_service().await;
 
         let req = TestRequest::post().uri("/users").to_request();
         let resp = test::call_service(&app, req).await;
-        assert!(resp.status() == 401);
+        assert_eq!(resp.status(), 401);
 
         let req = TestRequest::get().uri("/users/1234").to_request();
         let resp = test::call_service(&app, req).await;
-        assert!(resp.status() == 401);
+        assert_eq!(resp.status(), 401);
 
         let req = TestRequest::get()
             .uri("/users/1234")
             .insert_header((header::AUTHORIZATION, "Bearer 1234"))
             .to_request();
         let resp = test::call_service(&app, req).await;
-        assert!(resp.status() == 404);
+        assert_eq!(resp.status(), 404);
 
         let req = TestRequest::post()
             .uri("/users")
             .insert_header((header::AUTHORIZATION, "Bearer 1234"))
             .to_request();
         let resp = test::call_service(&app, req).await;
-        assert!(resp.status() == 200);
+        assert_eq!(resp.status(), 200);
 
         let req = TestRequest::get()
             .uri("/users/1234")
             .insert_header((header::AUTHORIZATION, "Bearer 1234"))
             .to_request();
         let resp = test::call_service(&app, req).await;
-        assert!(resp.status() == 200);
+        assert_eq!(resp.status(), 200);
 
         let req = TestRequest::get()
             .uri("/users/5678")
             .insert_header((header::AUTHORIZATION, "Bearer 1234"))
             .to_request();
         let resp = test::call_service(&app, req).await;
-        assert!(resp.status() == 404);
+        assert_eq!(resp.status(), 404);
 
         let req = TestRequest::get()
             .uri("/users/1234")
             .insert_header((header::AUTHORIZATION, "Bearer 5678"))
             .to_request();
         let resp = test::call_service(&app, req).await;
-        assert!(resp.status() == 200);
+        assert_eq!(resp.status(), 200);
     }
 }

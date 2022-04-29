@@ -18,3 +18,5 @@ async-trait = "*"
 r2d2 = "*"
 diesel_migrations = { git = "https://github.com/diesel-rs/diesel", features = ["postgres"] }
 url = "*"
+actix-service = "*"
+actix-http = "*"

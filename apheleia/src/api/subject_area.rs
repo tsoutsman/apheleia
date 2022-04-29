@@ -9,6 +9,14 @@ use actix_web::{delete, get, post, put, web, HttpResponse, Responder};
 use diesel::QueryDsl;
 use serde::Deserialize;
 
+pub(crate) fn config(cfg: &mut web::ServiceConfig) {
+    cfg.service(get_subject_area)
+        .service(get_subject_areas)
+        .service(add_subject_area)
+        .service(modify_subject_area)
+        .service(delete_subject_area);
+}
+
 #[get("/subject_areas/{id}")]
 async fn get_subject_area() -> impl Responder {
     HttpResponse::Ok()

@@ -9,6 +9,14 @@ use actix_web::{delete, get, post, put, web, HttpResponse, Responder};
 use diesel::QueryDsl;
 use serde::Deserialize;
 
+pub(crate) fn config(cfg: &mut web::ServiceConfig) {
+    cfg.service(get_role)
+        .service(get_roles)
+        .service(add_role)
+        .service(modify_role)
+        .service(delete_role);
+}
+
 #[get("/roles/{id}")]
 async fn get_role(
     role_id: web::Path<Id<id::Role>>,

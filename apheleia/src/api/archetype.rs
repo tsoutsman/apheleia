@@ -9,6 +9,14 @@ use actix_web::{delete, get, post, put, web, HttpResponse, Responder};
 use diesel::QueryDsl;
 use serde::Deserialize;
 
+pub(crate) fn config(cfg: &mut web::ServiceConfig) {
+    cfg.service(get_archetype)
+        .service(get_archetypes)
+        .service(add_archetype)
+        .service(modify_archetype)
+        .service(delete_archetype);
+}
+
 #[get("/archetypes/{id}")]
 async fn get_archetype(
     archetype_id: web::Path<Id<id::Archetype>>,

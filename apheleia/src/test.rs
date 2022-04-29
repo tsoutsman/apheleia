@@ -5,6 +5,7 @@ use crate::{
     db::{tokio::AsyncRunQueryDsl, DbPool},
 };
 
+use actix_http::Request;
 use diesel::{
     pg::PgConnection,
     query_dsl::methods::ExecuteDsl,
@@ -96,8 +97,6 @@ impl Drop for TestDbPool {
     }
 }
 
-// pub(crate) struct TestApp();
-
 pub(crate) fn gen_config() -> crate::auth::Config {
     Config {
         token_to_id_function: std::sync::Arc::new(move |token| -> crate::FuncReturn {
@@ -108,4 +107,27 @@ pub(crate) fn gen_config() -> crate::auth::Config {
 
 async fn test_token_to_id(token: String) -> Result<u32, Box<dyn std::error::Error>> {
     token.parse().map_err(|e: std::num::ParseIntError| e.into())
+}
+
+pub(crate) async fn init_test_service() -> (
+    impl actix_service::Service<
+        Request,
+        Response = actix_web::dev::ServiceResponse<actix_http::body::BoxBody>,
+        Error = actix_web::Error,
+    >,
+    TestDbPool,
+) {
+    let pool = crate::test::TestDbPool::new()
+        .await
+        .expect("failed to create db pool");
+    (
+        actix_web::test::init_service(
+            actix_web::App::new()
+                .app_data(actix_web::web::Data::new(pool.pool()))
+                .app_data(gen_config())
+                .configure(crate::api::config),
+        )
+        .await,
+        pool,
+    )
 }
