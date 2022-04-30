@@ -133,6 +133,10 @@ impl<T> Service for T where
 }
 
 pub(crate) async fn init_test_service() -> (impl Service, TestDbPool) {
+    let _ = env_logger::builder()
+        .is_test(true)
+        .filter_level(log::LevelFilter::Warn)
+        .try_init();
     let pool = crate::test::TestDbPool::new()
         .await
         .expect("failed to create db pool");

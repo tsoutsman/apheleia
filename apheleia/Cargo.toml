@@ -22,4 +22,4 @@ actix-service = "*"
 actix-http = "*"
 
 [dev-dependencies]
-rand= "*"
+env_logger = "*"

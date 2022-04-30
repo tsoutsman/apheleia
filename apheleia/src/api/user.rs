@@ -23,14 +23,30 @@ async fn get_user(_: User, user_id: web::Path<User>, pool: web::Data<DbPool>) ->
 
 #[post("/users")]
 async fn add_user(user: User, pool: web::Data<DbPool>) -> impl Responder {
-    // FIXME: What if user already exists?
     // TODO: Get and verify invite link.
 
-    diesel::insert_into(user::table)
+    let result = diesel::insert_into(user::table)
         .values(user)
         .execute(&pool)
-        .await?;
-    Result::Ok(HttpResponse::Ok())
+        .await;
+
+    match result {
+        Ok(_) => Result::Ok(HttpResponse::Ok()),
+        Err(e) => {
+            if let crate::Error::Database(diesel::result::Error::DatabaseError(
+                diesel::result::DatabaseErrorKind::UniqueViolation,
+                _,
+            )) = e
+            {
+                // Result::Ok isn't semantically correct in Rust, but the
+                // returned status code is still 409 and so the response is
+                // semantically correct externally.
+                Result::Ok(HttpResponse::Conflict())
+            } else {
+                Result::Err(e)
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -70,6 +86,13 @@ mod tests {
             .to_request();
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), 200);
+
+        let req = TestRequest::post()
+            .uri("/users")
+            .insert_header((header::AUTHORIZATION, "Bearer 1234"))
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 409);
 
         let req = TestRequest::get()
             .uri("/users/1234")
