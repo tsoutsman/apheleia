@@ -88,7 +88,6 @@ async fn modify_archetype(
     if user.is_admin_of(&pool, archetype_subject_area).await? {
         let request = request.into_inner();
         let target = archetype::table.find(*archetype_id);
-        // This is safe: https://github.com/diesel-rs/diesel/issues/885
         diesel::update(target).set(request).execute(&pool).await?;
         Result::Ok(HttpResponse::Ok())
     } else {
@@ -106,7 +105,6 @@ async fn delete_archetype(
     if user.is_admin_of(&pool, archetype_subject_area).await? {
         let target = archetype::table.find(*archetype_id);
         diesel::delete(target).execute(&pool).await?;
-
         Result::Ok(HttpResponse::Ok())
     } else {
         Result::Ok(HttpResponse::Forbidden())

@@ -7,7 +7,7 @@ use crate::{
 
 use actix_web::{delete, get, post, put, web, HttpResponse, Responder};
 use diesel::QueryDsl;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 pub(crate) fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(get_item)
@@ -38,10 +38,17 @@ async fn get_items(_: User, pool: web::Data<DbPool>) -> impl Responder {
 }
 
 #[derive(Clone, Debug, Deserialize)]
+#[cfg_attr(test, derive(Serialize))]
 struct AddItem {
     note: Option<String>,
     archetype: Id<id::Archetype>,
     archetype_data: serde_json::Value,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[cfg_attr(test, derive(Deserialize))]
+struct AddItemResponse {
+    id: Id<id::Item>,
 }
 
 #[post("/items")]
@@ -75,6 +82,7 @@ async fn add_item(
 }
 
 #[derive(Clone, Debug, Deserialize, AsChangeset)]
+#[cfg_attr(test, derive(Serialize))]
 #[diesel(table_name = item)]
 struct ModifyItem {
     note: Option<String>,
@@ -96,7 +104,8 @@ async fn modify_item(
         let request = request.into_inner();
 
         let target = item::table.find(*item_id);
-        // This is safe: https://github.com/diesel-rs/diesel/issues/885
+        // This will not overwrite note:
+        // https://github.com/diesel-rs/diesel/issues/885
         diesel::update(target).set(request).execute(&pool).await?;
 
         Result::Ok(HttpResponse::Ok())
@@ -126,10 +135,59 @@ async fn delete_item(
 
 #[cfg(test)]
 mod tests {
-    use crate::test::TestDbPool;
+    use super::*;
+    use actix_web::test::{self, TestRequest};
 
     #[tokio::test(flavor = "multi_thread")]
-    async fn test_item_access() {
-        let _pool = TestDbPool::new().await.expect("failed to create db pool");
+    async fn test_unauthenticated_item_access() {
+        let (app, _pool) = crate::test::init_test_service().await;
+
+        let req = TestRequest::get()
+            .uri("/items/30d6efc1-f093-4292-af2c-1d5718403d0c")
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 401);
+
+        let req = TestRequest::get().uri("/items").to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 401);
+
+        let req = TestRequest::post()
+            .uri("/items")
+            .set_json(AddItem {
+                note: Some("note".to_owned()),
+                archetype: Id::new(),
+                archetype_data: serde_json::Value::Null,
+            })
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 401);
+
+        let req = TestRequest::put()
+            .uri("/items/30d6efc1-f093-4292-af2c-1d5718403d0c")
+            .set_json(ModifyItem {
+                note: None,
+                archetype: None,
+                archetype_data: None,
+            })
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 401);
+
+        let req = TestRequest::delete()
+            .uri("/items/30d6efc1-f093-4292-af2c-1d5718403d0c")
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 401);
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn test_item_authorisation() {
+        let (app, _pool) = crate::test::init_test_service().await;
+
+        let admin = crate::test::create_user(&app).await;
+        let subject_area_id = crate::test::create_subject_area(&app, "subject area", admin).await;
+
+        let user = crate::test::create_user(&app).await;
     }
 }

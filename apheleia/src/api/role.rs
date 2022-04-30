@@ -87,11 +87,8 @@ async fn modify_role(
     let role_subject_area = role_id.subject_area().first(&pool).await?;
     if user.is_admin_of(&pool, role_subject_area).await? {
         let request = request.into_inner();
-
         let target = role::table.find(*role_id);
-        // This is safe: https://github.com/diesel-rs/diesel/issues/885
         diesel::update(target).set(request).execute(&pool).await?;
-
         Result::Ok(HttpResponse::Ok())
     } else {
         Result::Ok(HttpResponse::Forbidden())

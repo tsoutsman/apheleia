@@ -36,7 +36,7 @@ use serde::{Deserialize, Serialize};
     Deserialize,
 )]
 #[diesel(sql_type = Integer, table_name = user)]
-pub(crate) struct User(#[diesel(column_name = id)] i32);
+pub(crate) struct User(#[diesel(column_name = id)] pub(crate) i32);
 
 impl From<i32> for User {
     #[inline]

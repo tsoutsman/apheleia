@@ -40,15 +40,15 @@ async fn get_subject_areas(_: User, pool: web::Data<DbPool>) -> impl Responder {
 
 #[derive(Clone, Debug, Deserialize)]
 #[cfg_attr(test, derive(Serialize))]
-struct AddSubjectArea {
-    name: String,
-    admin: User,
+pub(crate) struct AddSubjectArea {
+    pub(crate) name: String,
+    pub(crate) admin: User,
 }
 
 #[derive(Clone, Debug, Serialize)]
 #[cfg_attr(test, derive(Deserialize))]
-struct AddSubjectAreaResponse {
-    id: Id<id::SubjectArea>,
+pub(crate) struct AddSubjectAreaResponse {
+    pub(crate) id: Id<id::SubjectArea>,
 }
 
 #[post("/subject_areas")]
@@ -97,7 +97,6 @@ async fn modify_subject_area(
     if user.is_root(*root.into_inner()) || user.is_admin_of(&pool, *subject_area_id).await? {
         let request = request.into_inner();
         let target = subject_area::table.find(*subject_area_id);
-        // This is safe: https://github.com/diesel-rs/diesel/issues/885
         diesel::update(target).set(request).execute(&pool).await?;
         Result::Ok(HttpResponse::Ok())
     } else {
@@ -124,20 +123,16 @@ async fn delete_subject_area(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use actix_web::{
-        http::header,
-        test::{self, TestRequest},
-    };
+    use actix_web::test::{self, TestRequest};
 
     #[tokio::test(flavor = "multi_thread")]
     async fn test_invalid_subject_area_uuid() {
         let (app, _pool) = crate::test::init_test_service().await;
 
-        let req = TestRequest::get()
-            .uri("/subject_areas/z")
-            .insert_header((header::AUTHORIZATION, "Bearer 1234"))
-            .to_request();
-        let resp = test::call_service(&app, req).await;
+        let user = crate::test::create_user(&app).await;
+        let resp = user
+            .request(&app, TestRequest::get().uri("/subject_areas/z"))
+            .await;
         // NOTE: I don't think 404 is the correct status code, but it's what
         // Actix Web spits out when web::Path fails to deserialize and wouldn't
         // be trivial to change.
@@ -190,162 +185,162 @@ mod tests {
     async fn test_subject_area_authorisation() {
         let (app, _pool) = crate::test::init_test_service().await;
 
+        let user = crate::test::create_user(&app).await;
+
         // Attempt to create a subject area without authorisation.
 
-        let req = TestRequest::post()
-            .uri("/subject_areas")
-            .insert_header((header::AUTHORIZATION, "Bearer 1234"))
-            .set_json(AddSubjectArea {
-                name: "name".to_owned(),
-                admin: 1.into(),
-            })
-            .to_request();
-        let resp = test::call_service(&app, req).await;
+        let resp = user
+            .request(
+                &app,
+                TestRequest::post()
+                    .uri("/subject_areas")
+                    .set_json(AddSubjectArea {
+                        name: "name".to_owned(),
+                        admin: 1.into(),
+                    }),
+            )
+            .await;
         assert_eq!(resp.status(), 403);
 
         // Attempt to modify an unknown subject area.
 
-        let req = TestRequest::put()
-            .uri("/subject_areas/30d6efc1-f093-4292-af2c-1d5718403d0c")
-            .insert_header((header::AUTHORIZATION, "Bearer 1234"))
-            .set_json(ModifySubjectArea {
-                name: None,
-                admin: None,
-            })
-            .to_request();
-        let resp = test::call_service(&app, req).await;
+        let resp = user
+            .request(
+                &app,
+                TestRequest::put()
+                    .uri("/subject_areas/30d6efc1-f093-4292-af2c-1d5718403d0c")
+                    .set_json(ModifySubjectArea {
+                        name: None,
+                        admin: None,
+                    }),
+            )
+            .await;
         assert_eq!(resp.status(), 404);
 
         // Attempt to delete an unknown subject area.
 
-        let req = TestRequest::delete()
-            .uri("/subject_areas/30d6efc1-f093-4292-af2c-1d5718403d0c")
-            .insert_header((header::AUTHORIZATION, "Bearer 1234"))
-            .to_request();
-        let resp = test::call_service(&app, req).await;
+        let resp = user
+            .request(
+                &app,
+                TestRequest::delete().uri("/subject_areas/30d6efc1-f093-4292-af2c-1d5718403d0c"),
+            )
+            .await;
         assert_eq!(resp.status(), 404);
 
-        // Create a user to be the admin of the subject area.
-
-        let req = TestRequest::post()
-            .uri("/users")
-            .insert_header((header::AUTHORIZATION, "Bearer 1"))
-            .to_request();
-        let resp = test::call_service(&app, req).await;
-        assert_eq!(resp.status(), 200);
-
-        // Create the subject area.
-
-        let req = TestRequest::post()
-            .uri("/subject_areas")
-            .insert_header((header::AUTHORIZATION, "Bearer 0"))
-            .set_json(AddSubjectArea {
-                name: "name".to_owned(),
-                admin: 1.into(),
-            })
-            .to_request();
-        let resp = test::call_service(&app, req).await;
-        assert_eq!(resp.status(), 200);
-        let subject_area_id = test::read_body_json::<AddSubjectAreaResponse, _>(resp)
-            .await
-            .id;
+        let admin = crate::test::create_user(&app).await;
+        let subject_area_id = crate::test::create_subject_area(&app, "subject area", admin).await;
 
         // Attempt to create a subject area without authorisation.
 
-        let req = TestRequest::post()
-            .uri("/subject_areas")
-            .insert_header((header::AUTHORIZATION, "Bearer 1234"))
-            .set_json(AddSubjectArea {
-                name: "name".to_owned(),
-                admin: 1.into(),
-            })
-            .to_request();
-        let resp = test::call_service(&app, req).await;
+        let resp = user
+            .request(
+                &app,
+                TestRequest::post()
+                    .uri("/subject_areas")
+                    .set_json(AddSubjectArea {
+                        name: "name".to_owned(),
+                        admin,
+                    }),
+            )
+            .await;
         assert_eq!(resp.status(), 403);
 
         // Get the subject area data.
 
-        let req = TestRequest::get()
-            .uri(&format!("/subject_areas/{}", subject_area_id))
-            .insert_header((header::AUTHORIZATION, "Bearer 1234"))
-            .to_request();
-        let resp = test::call_service(&app, req).await;
+        let resp = user
+            .request(
+                &app,
+                TestRequest::get().uri(&format!("/subject_areas/{}", subject_area_id)),
+            )
+            .await;
         assert_eq!(resp.status(), 200);
         let subject_area = test::read_body_json::<model::SubjectArea, _>(resp).await;
         assert_eq!(
             subject_area,
             model::SubjectArea {
                 id: subject_area_id,
-                name: "name".to_owned(),
-                admin: 1.into(),
+                name: "subject area".to_owned(),
+                admin,
             }
         );
 
         // Attempt to modify the subject area without authorisation.
 
-        let req = TestRequest::put()
-            .uri(&format!("/subject_areas/{}", subject_area_id))
-            .insert_header((header::AUTHORIZATION, "Bearer 1234"))
-            .set_json(ModifySubjectArea {
-                name: None,
-                admin: None,
-            })
-            .to_request();
-        let resp = test::call_service(&app, req).await;
+        let resp = user
+            .request(
+                &app,
+                TestRequest::put()
+                    .uri(&format!("/subject_areas/{}", subject_area_id))
+                    .set_json(ModifySubjectArea {
+                        name: None,
+                        admin: None,
+                    }),
+            )
+            .await;
         assert_eq!(resp.status(), 403);
 
         // Attempt to delete the subject area without authorisation.
 
-        let req = TestRequest::delete()
-            .uri(&format!("/subject_areas/{}", subject_area_id))
-            .insert_header((header::AUTHORIZATION, "Bearer 1234"))
-            .to_request();
-        let resp = test::call_service(&app, req).await;
+        let resp = user
+            .request(
+                &app,
+                TestRequest::delete().uri(&format!("/subject_areas/{}", subject_area_id)),
+            )
+            .await;
         assert_eq!(resp.status(), 403);
 
         // Modify the subject area
 
-        let req = TestRequest::put()
-            .uri(&format!("/subject_areas/{}", subject_area_id))
-            .insert_header((header::AUTHORIZATION, "Bearer 1"))
-            .set_json(ModifySubjectArea {
-                name: Some("name 2".to_owned()),
-                admin: None,
-            })
-            .to_request();
-        let resp = test::call_service(&app, req).await;
+        let resp = admin
+            .request(
+                &app,
+                TestRequest::put()
+                    .uri(&format!("/subject_areas/{}", subject_area_id))
+                    .set_json(ModifySubjectArea {
+                        name: Some("subject area 2".to_owned()),
+                        admin: None,
+                    }),
+            )
+            .await;
         assert_eq!(resp.status(), 200);
 
-        let req = TestRequest::get()
-            .uri(&format!("/subject_areas/{}", subject_area_id))
-            .insert_header((header::AUTHORIZATION, "Bearer 1234"))
-            .to_request();
-        let resp = test::call_service(&app, req).await;
+        // Confirm that the subject area was modified.
+
+        let resp = user
+            .request(
+                &app,
+                TestRequest::get().uri(&format!("/subject_areas/{}", subject_area_id)),
+            )
+            .await;
         assert_eq!(resp.status(), 200);
         let subject_area = test::read_body_json::<model::SubjectArea, _>(resp).await;
         assert_eq!(
             subject_area,
             model::SubjectArea {
                 id: subject_area_id,
-                name: "name 2".to_owned(),
-                admin: 1.into(),
+                name: "subject area 2".to_owned(),
+                admin,
             }
         );
 
         // Delete the subject area.
 
-        let req = TestRequest::delete()
-            .uri(&format!("/subject_areas/{}", subject_area_id))
-            .insert_header((header::AUTHORIZATION, "Bearer 1"))
-            .to_request();
-        let resp = test::call_service(&app, req).await;
+        let resp = admin
+            .request(
+                &app,
+                TestRequest::delete().uri(&format!("/subject_areas/{}", subject_area_id)),
+            )
+            .await;
         assert_eq!(resp.status(), 200);
 
-        let req = TestRequest::get()
-            .uri(&format!("/subject_areas/{}", subject_area_id))
-            .insert_header((header::AUTHORIZATION, "Bearer 1234"))
-            .to_request();
-        let resp = test::call_service(&app, req).await;
+        // Confirm that the subject area was deleted.
+
+        let resp = user
+            .request(
+                &app,
+                TestRequest::get().uri(&format!("/subject_areas/{}", subject_area_id)),
+            )
+            .await;
         assert_eq!(resp.status(), 404);
     }
 }
