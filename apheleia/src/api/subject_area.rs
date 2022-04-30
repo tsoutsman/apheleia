@@ -297,7 +297,7 @@ mod tests {
                 TestRequest::put()
                     .uri(&format!("/subject_areas/{}", subject_area_id))
                     .set_json(ModifySubjectArea {
-                        name: Some("subject area 2".to_owned()),
+                        name: Some("another subject area name".to_owned()),
                         admin: None,
                     }),
             )
@@ -318,9 +318,52 @@ mod tests {
             subject_area,
             model::SubjectArea {
                 id: subject_area_id,
+                name: "another subject area name".to_owned(),
+                admin,
+            }
+        );
+
+        let subject_area_2_id =
+            crate::test::create_subject_area(&app, "subject area 2", admin).await;
+
+        // Confirm that the subject area was added.
+
+        let resp = user
+            .request(
+                &app,
+                TestRequest::get().uri(&format!("/subject_areas/{}", subject_area_2_id)),
+            )
+            .await;
+        assert_eq!(resp.status(), 200);
+        let subject_area = test::read_body_json::<model::SubjectArea, _>(resp).await;
+        assert_eq!(
+            subject_area,
+            model::SubjectArea {
+                id: subject_area_2_id,
                 name: "subject area 2".to_owned(),
                 admin,
             }
+        );
+
+        let resp = user
+            .request(&app, TestRequest::get().uri("/subject_areas"))
+            .await;
+        assert_eq!(resp.status(), 200);
+        let subject_areas = test::read_body_json::<Vec<model::SubjectArea>, _>(resp).await;
+        assert_eq!(
+            subject_areas,
+            vec![
+                model::SubjectArea {
+                    id: subject_area_id,
+                    name: "another subject area name".to_owned(),
+                    admin,
+                },
+                model::SubjectArea {
+                    id: subject_area_2_id,
+                    name: "subject area 2".to_owned(),
+                    admin
+                }
+            ]
         );
 
         // Delete the subject area.

@@ -17,6 +17,7 @@ pub(crate) struct Archetype {
 }
 
 #[derive(Clone, Queryable, Insertable, Debug, Identifiable, Serialize)]
+#[cfg_attr(test, derive(Eq, PartialEq, serde::Deserialize))]
 #[diesel(table_name = item)]
 pub(crate) struct Item {
     pub(crate) id: Id<id::Item>,

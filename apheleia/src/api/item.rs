@@ -189,5 +189,20 @@ mod tests {
         let subject_area_id = crate::test::create_subject_area(&app, "subject area", admin).await;
 
         let user = crate::test::create_user(&app).await;
+
+        let resp = user
+            .request(
+                &app,
+                TestRequest::get().uri("/items/30d6efc1-f093-4292-af2c-1d5718403d0c"),
+            )
+            .await;
+        assert_eq!(resp.status(), 404);
+
+        let resp = user.request(&app, TestRequest::get().uri("/items")).await;
+        assert_eq!(resp.status(), 200);
+        let items = test::read_body_json::<Vec<model::Item>, _>(resp).await;
+        assert_eq!(items, vec![]);
+
+        // TODO: Add more tests.
     }
 }
