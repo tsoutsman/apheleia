@@ -28,7 +28,7 @@ where
         token_to_id_function: Arc::new(wrapper),
     };
     let manager =
-        ConnectionManager::<PgConnection>::new("postgres://username:password@localhost/db_name");
+        ConnectionManager::<PgConnection>::new("postgres://postgres:postgres@db/apheleia");
     let db_pool = Pool::new(manager)?;
 
     let mut conn = db_pool.get()?;

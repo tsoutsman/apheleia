@@ -4,9 +4,9 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("error authentication user")]
+    #[error("error authenticating caller")]
     Authentication,
-    #[error("user has insufficient rights")]
+    #[error("caller has insufficient rights")]
     Authorisation,
     #[error("unknown I/O error")]
     Io(#[from] std::io::Error),

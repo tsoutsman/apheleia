@@ -37,7 +37,11 @@ where
         + 'static
         + Send,
 {
-    actix_web::rt::System::new().block_on(async move { serve(token_to_id_function, root).await })
+    tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()
+        .unwrap()
+        .block_on(async move { serve(token_to_id_function, root).await })
 }
 
 #[macro_use]
