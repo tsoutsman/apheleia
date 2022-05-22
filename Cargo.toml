@@ -1,7 +1,50 @@
-[workspace]
-members = ["apheleia", "bin"]
+[package]
+name = "apheleia"
+version = "0.1.0"
+edition = "2021"
 
 [profile.release]
 strip = "symbols"
 lto = "fat"
 codegen-units = 1
+
+[dependencies]
+tokio = { version = "1.18", features = ["full"] }
+chrono = { version = "0.4", features = ["serde"] }
+actix-web = "4.0"
+futures = "0.3"
+thiserror = "1.0"
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+log = "0.4"
+uuid = { version = "1.0", features = ["v4", "serde"] }
+async-trait = "0.1"
+r2d2 = "0.8"
+url = "2.2"
+actix-service = "2.0"
+actix-http = "3.0"
+
+# bin dependencies
+reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls"] }
+lazy_static = "1.4"
+
+[dependencies.diesel]
+git = "https://github.com/diesel-rs/diesel"
+features = [
+  "postgres",
+  "r2d2",
+  "serde_json",
+  "chrono",
+  "uuid",
+  "i-implement-a-third-party-backend-and-opt-into-breaking-changes"
+]
+default-features = false
+rev = "983209a6188392552efa51fe76284eb3097b012a"
+
+[dependencies.diesel_migrations]
+git = "https://github.com/diesel-rs/diesel"
+features = ["postgres"]
+rev = "983209a6188392552efa51fe76284eb3097b012a"
+
+[dev-dependencies]
+env_logger = "*"
