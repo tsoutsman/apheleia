@@ -17,7 +17,7 @@ async fn sbhs_token_to_id(token: String) -> Result<u32, Box<dyn std::error::Erro
 
     let id = HTTP_CLIENT
         .get(API_ENDPOINT)
-        .header("Authorization", format!("Bearer {}", token))
+        .header("Authorization", format!("Bearer {token}"))
         .send()
         .await?
         .json::<JsonResponse>()
@@ -28,6 +28,19 @@ async fn sbhs_token_to_id(token: String) -> Result<u32, Box<dyn std::error::Erro
     Ok(id)
 }
 
+#[inline]
+async fn no_auth(token: String) -> Result<u32, Box<dyn std::error::Error>> {
+    Ok(token.parse()?)
+}
+
 fn main() -> apheleia::Result<()> {
-    apheleia::run(sbhs_token_to_id, apheleia::Root(436898703))
+    for arg in std::env::args() {
+        if arg == "--no-auth" {
+            return apheleia::run(
+                no_auth,
+                apheleia::Root(0),
+            );
+        }
+    }
+    apheleia::run(sbhs_token_to_id, apheleia::Root(0))
 }
