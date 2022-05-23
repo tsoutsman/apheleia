@@ -178,3 +178,9 @@ impl User {
             .inner_join(role_permissions::table.on(user_roles::role.eq(role_permissions::role)))
     }
 }
+
+impl std::fmt::Display for User {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0.to_string())
+    }
+}

@@ -1,24 +1,46 @@
 use crate::{
     auth::User,
-    db::{schema::user, tokio::AsyncRunQueryDsl, DbPool},
-    Result,
+    db::{
+        model,
+        schema::{role, user, user_roles},
+        tokio::AsyncRunQueryDsl,
+        DbPool,
+    },
+    id::{self, Id},
+    Result, Root,
 };
 
-use actix_web::{get, post, web, HttpResponse, Responder};
-use diesel::QueryDsl;
+use actix_web::{delete, get, post, web, HttpResponse, Responder};
+use diesel::{ExpressionMethods, QueryDsl};
+use serde::{Deserialize, Serialize};
 
 pub(crate) fn config(cfg: &mut web::ServiceConfig) {
-    cfg.service(get_user).service(add_user);
+    cfg.service(get_user)
+        .service(add_user)
+        .service(add_user_role)
+        .service(delete_user_role);
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[cfg_attr(test, derive(Eq, PartialEq, Deserialize))]
+struct GetUserResponse {
+    roles: Vec<Id<id::Role>>,
 }
 
 #[get("/users/{id}")]
 async fn get_user(_: User, user_id: web::Path<User>, pool: web::Data<DbPool>) -> impl Responder {
-    let user = user::table
+    let _ = user::table
         .find(*user_id)
         .select(user::id)
         .first::<User>(&pool)
         .await?;
-    Result::Ok(HttpResponse::Ok().json(user))
+    let roles = user_roles::table
+        .filter(user_roles::user.eq(*user_id))
+        .select(user_roles::role)
+        .load::<Id<_>>(&pool)
+        .await?;
+    let response = GetUserResponse { roles };
+    Result::Ok(HttpResponse::Ok().json(response))
 }
 
 #[post("/users")]
@@ -49,8 +71,62 @@ async fn add_user(user: User, pool: web::Data<DbPool>) -> impl Responder {
     }
 }
 
+#[post("/users/{user_id}/roles/{role_id}")]
+async fn add_user_role(
+    requesting_user: User,
+    path: web::Path<(User, Id<id::Role>)>,
+    pool: web::Data<DbPool>,
+    root: web::Data<Root>,
+) -> impl Responder {
+    let (user_id, role_id) = path.into_inner();
+    let subject_area_id = role::table
+        .find(role_id)
+        .select(role::subject_area)
+        .first::<Id<id::SubjectArea>>(&pool)
+        .await?;
+    // TODO: Merge queries (authenticate in one query)
+    if requesting_user.is_root(*root.into_inner()) || requesting_user.is_admin_of(&pool, subject_area_id).await? {
+        let user_role = model::UserRole {
+            user: user_id,
+            role: role_id,
+        };
+        diesel::insert_into(user_roles::table)
+            .values(user_role)
+            .execute(&pool)
+            .await?;
+        Result::Ok(HttpResponse::Ok())
+    } else {
+        Result::Ok(HttpResponse::Forbidden())
+    }
+}
+
+#[delete("/users/{user_id}/roles/{role_id}")]
+async fn delete_user_role(
+    requesting_user: User,
+    path: web::Path<(User, Id<id::Role>)>,
+    pool: web::Data<DbPool>,
+    root: web::Data<Root>,
+) -> impl Responder {
+    let (user_id, role_id) = path.into_inner();
+    let subject_area_id = role::table
+        .find(role_id)
+        .select(role::subject_area)
+        .first::<Id<id::SubjectArea>>(&pool)
+        .await?;
+    // TODO: Merge queries (authenticate in one query)
+    if requesting_user.is_root(*root.into_inner()) || requesting_user.is_admin_of(&pool, subject_area_id).await? {
+        let target = user_roles::table.find((user_id, role_id));
+        diesel::delete(target).execute(&pool).await?;
+        Result::Ok(HttpResponse::Ok())
+    } else {
+        Result::Ok(HttpResponse::Forbidden())
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     use actix_web::{
         http::header,
         test::{self, TestRequest},
@@ -114,5 +190,73 @@ mod tests {
             .to_request();
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), 200);
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn test_user_roles() {
+        let (app, _pool) = crate::test::init_test_service().await;
+        let user = crate::test::create_user(&app).await;
+        let subject_area = crate::test::create_subject_area(&app, "subject area 1", user).await;
+
+        let resp = user
+            .request(&app, TestRequest::get().uri(&format!("/users/{user}")))
+            .await;
+        assert_eq!(resp.status(), 200);
+        let user_response = test::read_body_json::<GetUserResponse, _>(resp).await;
+        assert_eq!(user_response, GetUserResponse { roles: vec![] });
+
+        let role_1 = crate::test::create_role(&app, "role 1", subject_area).await;
+        let resp = User::root().request(
+            &app,
+            TestRequest::post().uri(&(format!("/users/{user}/roles/{role_1}"))),
+        ).await;
+        assert_eq!(resp.status(), 200);
+
+        let resp = user
+            .request(&app, TestRequest::get().uri(&format!("/users/{user}")))
+            .await;
+        assert_eq!(resp.status(), 200);
+        let user_response = test::read_body_json::<GetUserResponse, _>(resp).await;
+        assert_eq!(user_response, GetUserResponse { roles: vec![role_1] });
+
+        let role_2 = crate::test::create_role(&app, "role 2", subject_area).await;
+        let resp = User::root().request(
+            &app,
+            TestRequest::post().uri(&(format!("/users/{user}/roles/{role_2}"))),
+        ).await;
+        assert_eq!(resp.status(), 200);
+
+        let resp = user
+            .request(&app, TestRequest::get().uri(&format!("/users/{user}")))
+            .await;
+        assert_eq!(resp.status(), 200);
+        let user_response = test::read_body_json::<GetUserResponse, _>(resp).await;
+        assert_eq!(user_response, GetUserResponse { roles: vec![role_1, role_2] });
+
+        let resp = User::root().request(
+            &app,
+            TestRequest::delete().uri(&(format!("/users/{user}/roles/{role_1}"))),
+        ).await;
+        assert_eq!(resp.status(), 200);
+
+        let resp = user
+            .request(&app, TestRequest::get().uri(&format!("/users/{user}")))
+            .await;
+        assert_eq!(resp.status(), 200);
+        let user_response = test::read_body_json::<GetUserResponse, _>(resp).await;
+        assert_eq!(user_response, GetUserResponse { roles: vec![role_2] });
+
+        let resp = User::root().request(
+            &app,
+            TestRequest::delete().uri(&(format!("/users/{user}/roles/{role_2}"))),
+        ).await;
+        assert_eq!(resp.status(), 200);
+
+        let resp = user
+            .request(&app, TestRequest::get().uri(&format!("/users/{user}")))
+            .await;
+        assert_eq!(resp.status(), 200);
+        let user_response = test::read_body_json::<GetUserResponse, _>(resp).await;
+        assert_eq!(user_response, GetUserResponse { roles: vec![] });
     }
 }

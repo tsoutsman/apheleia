@@ -178,17 +178,45 @@ where
     T: Service,
     U: Into<String>,
 {
-    let req = TestRequest::post()
-        .uri("/subject_areas")
-        .insert_header((header::AUTHORIZATION, "Bearer 0"))
-        .set_json(crate::api::subject_area::AddSubjectArea {
-            name: name.into(),
-            admin: admin_id,
-        })
-        .to_request();
-    let resp = test::call_service(&app, req).await;
+    let resp = User::root()
+        .request(
+            &app,
+            TestRequest::post()
+                .uri("/subject_areas")
+                .set_json(crate::api::subject_area::AddSubjectArea {
+                    name: name.into(),
+                    admin: admin_id,
+                }),
+        )
+        .await;
     assert_eq!(resp.status(), 200);
     test::read_body_json::<crate::api::subject_area::AddSubjectAreaResponse, _>(resp)
+        .await
+        .id
+}
+
+pub(crate) async fn create_role<T, U>(
+    app: &T,
+    name: U,
+    subject_area: Id<id::SubjectArea>,
+) -> Id<id::Role>
+where
+    T: Service,
+    U: Into<String>,
+{
+    let resp = User::root()
+        .request(
+            &app,
+            TestRequest::post()
+                .uri("/roles")
+                .set_json(crate::api::role::AddRole {
+                    name: name.into(),
+                    subject_area,
+                })
+        )
+        .await;
+    assert_eq!(resp.status(), 200);
+    test::read_body_json::<crate::api::role::AddRoleResponse, _>(resp)
         .await
         .id
 }
@@ -209,6 +237,10 @@ impl User {
                 .to_request(),
         )
         .await
+    }
+
+    pub(crate) fn root() -> Self {
+        User(0)
     }
 }
 
