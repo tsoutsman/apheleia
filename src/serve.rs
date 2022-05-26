@@ -18,7 +18,7 @@ use diesel_migrations::MigrationHarness;
 /// unverified token into some verified ID. For example, an OAuth access token
 /// into a user ID.
 #[inline]
-pub(crate) async fn serve<Func, Fut>(token_to_id_function: Func, root: Root) -> Result<()>
+pub async fn serve<Func, Fut>(token_to_id_function: Func, root: Root) -> Result<()>
 where
     Func: Fn(String) -> Fut + 'static + Send + Sync + Clone,
     Fut: Future<Output = std::result::Result<u32, Box<dyn std::error::Error>>> + 'static + Send,

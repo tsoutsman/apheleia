@@ -14,6 +14,8 @@ pub enum Error {
     Timeout(#[from] tokio::time::error::Elapsed),
     #[error("unknown database connection pool error")]
     R2d2(#[from] r2d2::Error),
+    #[error("join error")]
+    Join(#[from] tokio::task::JoinError),
     #[error("error occured during database migration")]
     Migration,
     #[error("not found")]
@@ -30,6 +32,7 @@ impl ResponseError for Error {
             Error::Io(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Error::Timeout(_) => StatusCode::BAD_REQUEST,
             Error::R2d2(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Error::Join(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Error::Migration => StatusCode::INTERNAL_SERVER_ERROR,
             Error::NotFound(_) => StatusCode::NOT_FOUND,
             Error::Database(_) => StatusCode::INTERNAL_SERVER_ERROR,

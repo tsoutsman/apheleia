@@ -33,14 +33,15 @@ async fn no_auth(token: String) -> Result<u32, Box<dyn std::error::Error>> {
     Ok(token.parse()?)
 }
 
-fn main() -> apheleia::Result<()> {
+#[tokio::main(flavor = "multi_thread")]
+async fn main() -> apheleia::Result<()> {
     for arg in std::env::args() {
         if arg == "--no-auth" {
-            return apheleia::run(
+            return apheleia::serve(
                 no_auth,
                 apheleia::Root(0),
-            );
+            ).await;
         }
     }
-    apheleia::run(sbhs_token_to_id, apheleia::Root(0))
+    apheleia::serve(sbhs_token_to_id, apheleia::Root(0)).await
 }
