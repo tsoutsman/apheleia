@@ -1,7 +1,7 @@
 use crate::{
     auth::Permission,
     db::{
-        schema::{item, role_permissions, subject_area, user, user_roles},
+        schema::{item, loan, role_permissions, subject_area, user, user_roles},
         tokio::AsyncRunQueryDsl,
         DbPool,
     },
@@ -144,6 +144,21 @@ impl User {
                 Permission::Loan => loan,
                 Permission::Receive => receive,
             }))
+    }
+
+    pub(crate) async fn is_authorised_by_loan(
+        &self,
+        pool: &DbPool,
+        loan_id: Id<id::Loan>,
+        permission: Permission,
+    ) -> crate::Result<bool> {
+        let item_id = loan::table
+            .find(loan_id)
+            .select(loan::item)
+            .first::<Id<id::Item>>(pool)
+            .await?;
+
+        self.is_authorised_by_item(pool, item_id, permission).await
     }
 
     pub(crate) async fn is_admin_of(

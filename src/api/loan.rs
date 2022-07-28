@@ -109,7 +109,6 @@ async fn add_loan(
 
         let loan = model::Loan {
             id: Id::new(),
-            // TODO
             return_requested: false,
             item: request.item,
             loaner: user,
@@ -130,19 +129,72 @@ async fn add_loan(
     }
 }
 
-// #[derive(Clone, Debug, Deserialize)]
-// #[diesel(table_name = item)]
-// struct ModifyLoan {
-//     note: Option<String>,
-//     returned: Option<bool>,
-// }
+#[derive(Clone, Debug, Deserialize)]
+struct ModifyLoan {
+    return_requested: Option<bool>,
+    note: Option<String>,
+    date_loaned: Option<DateTime<Utc>>,
+    date_due: Option<DateTime<Utc>>,
+    returned: Option<bool>,
+}
 
 #[put("/loans/{id}")]
-async fn modify_loan() -> impl Responder {
-    HttpResponse::Ok()
+async fn modify_loan(
+    user: User,
+    loan_id: web::Path<Id<id::Loan>>,
+    request: web::Json<ModifyLoan>,
+    pool: web::Data<DbPool>,
+) -> impl Responder {
+    if user
+        .is_authorised_by_loan(&pool, *loan_id, Permission::Receive)
+        .await?
+    {
+        let request = request.into_inner();
+
+        #[derive(Clone, Debug, Deserialize, AsChangeset)]
+        #[diesel(table_name = loan)]
+        struct ModifyLoanChangeset {
+            return_requested: Option<bool>,
+            note: Option<String>,
+            date_loaned: Option<DateTime<Utc>>,
+            date_due: Option<DateTime<Utc>>,
+            date_returned: Option<DateTime<Utc>>,
+        }
+
+        let mut changeset = ModifyLoanChangeset {
+            return_requested: request.return_requested,
+            note: request.note,
+            date_loaned: request.date_loaned,
+            date_due: request.date_due,
+            date_returned: None,
+        };
+
+        if request.returned.unwrap_or(false) {
+            changeset.date_returned = Some(Utc::now());
+            changeset.return_requested = Some(false);
+        }
+
+        let target = loan::table.find(*loan_id);
+        diesel::update(target).set(changeset).execute(&pool).await?;
+
+        Result::Ok(HttpResponse::Ok())
+    } else {
+        Result::Ok(HttpResponse::Forbidden())
+    }
 }
 
 #[delete("/loans/{id}")]
-async fn delete_loan() -> impl Responder {
-    HttpResponse::Ok()
+async fn delete_loan(
+    user: User,
+    loan_id: web::Path<Id<id::Loan>>,
+    pool: web::Data<DbPool>,
+) -> impl Responder {
+    let loan_subject_area = loan_id.subject_area().first(&pool).await?;
+    if user.is_admin_of(&pool, loan_subject_area).await? {
+        let target = loan::table.find(*loan_id);
+        diesel::delete(target).execute(&pool).await?;
+        Result::Ok(HttpResponse::Ok())
+    } else {
+        Result::Ok(HttpResponse::Forbidden())
+    }
 }

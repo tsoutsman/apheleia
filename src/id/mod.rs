@@ -1,5 +1,6 @@
 mod archetype;
 mod item;
+mod loan;
 mod role;
 
 use std::marker::PhantomData;
