@@ -5,7 +5,8 @@ use crate::{
     Error, FuncReturn, Result,
 };
 
-use actix_web::{middleware, web::Data, App, HttpServer};
+use actix_http::header::{HeaderName, HeaderValue};
+use actix_web::{dev::Service, middleware, web::Data, App, HttpServer};
 use diesel::{
     pg::PgConnection,
     r2d2::{ConnectionManager, Pool},
@@ -31,6 +32,7 @@ where
         ConnectionManager::<PgConnection>::new("postgres://postgres:postgres@db/apheleia");
     let db_pool = Pool::new(manager)?;
 
+    // Update database schema
     let mut conn = db_pool.get()?;
     tokio::task::block_in_place(|| -> Result<()> {
         conn.run_pending_migrations(crate::MIGRATIONS)
@@ -46,12 +48,24 @@ where
             .app_data(config.clone())
             .wrap(middleware::Compress::default())
             .wrap(middleware::Logger::default())
+            // Add CORS policy
+            .wrap_fn(|req, srv| {
+                let fut = srv.call(req);
+                async {
+                    let mut res = fut.await?;
+                    res.headers_mut().insert(
+                        HeaderName::from_static("access-control-allow-origin"),
+                        HeaderValue::from_static("*"),
+                    );
+                    Ok(res)
+                }
+            })
             .configure(crate::api::config)
     })
     .bind("0.0.0.0:8000")
     .map_err(|e| -> Error { e.into() })?;
 
-    log::info!("Listening on: {:?}", server.addrs());
+    println!("Listening on: {:?}", server.addrs());
 
     server.run().await.map_err(|e| -> Error { e.into() })
 }

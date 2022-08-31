@@ -33,7 +33,6 @@ async fn get_archetype(
 
 #[get("/archetypes")]
 async fn get_archetypes(pool: web::Data<DbPool>, _: User) -> impl Responder {
-    // TODO: Pagination
     let archetypes = archetype::table.load::<model::Archetype>(&pool).await?;
     Result::Ok(HttpResponse::Ok().json(archetypes))
 }

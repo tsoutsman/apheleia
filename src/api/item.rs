@@ -32,7 +32,6 @@ async fn get_item(
 
 #[get("/items")]
 async fn get_items(_: User, pool: web::Data<DbPool>) -> impl Responder {
-    // TODO: Pagination
     let items = item::table.load::<model::Item>(&pool).await?;
     Result::Ok(HttpResponse::Ok().json(items))
 }
@@ -202,7 +201,5 @@ mod tests {
         assert_eq!(resp.status(), 200);
         let items = test::read_body_json::<Vec<model::Item>, _>(resp).await;
         assert_eq!(items, vec![]);
-
-        // TODO: Add more tests.
     }
 }

@@ -45,8 +45,6 @@ async fn get_user(_: User, user_id: web::Path<User>, pool: web::Data<DbPool>) ->
 
 #[post("/users")]
 async fn add_user(user: User, pool: web::Data<DbPool>) -> impl Responder {
-    // TODO: Get and verify invite link.
-
     let result = diesel::insert_into(user::table)
         .values(user)
         .execute(&pool)
@@ -84,7 +82,6 @@ async fn add_user_role(
         .select(role::subject_area)
         .first::<Id<id::SubjectArea>>(&pool)
         .await?;
-    // TODO: Merge queries (authenticate in one query)
     if requesting_user.is_root(*root.into_inner()) || requesting_user.is_admin_of(&pool, subject_area_id).await? {
         let user_role = model::UserRole {
             user: user_id,
@@ -113,7 +110,6 @@ async fn delete_user_role(
         .select(role::subject_area)
         .first::<Id<id::SubjectArea>>(&pool)
         .await?;
-    // TODO: Merge queries (authenticate in one query)
     if requesting_user.is_root(*root.into_inner()) || requesting_user.is_admin_of(&pool, subject_area_id).await? {
         let target = user_roles::table.find((user_id, role_id));
         diesel::delete(target).execute(&pool).await?;

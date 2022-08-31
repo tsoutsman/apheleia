@@ -29,7 +29,6 @@ async fn get_loan(
     loan_id: web::Path<Id<id::Item>>,
     pool: web::Data<DbPool>,
 ) -> impl Responder {
-    // TODO: Should everyone have access to loan.
     let loan = loan::table
         .find(*loan_id)
         .first::<model::Loan>(&pool)
@@ -76,7 +75,6 @@ async fn get_loans(
                 .inner_join(item::table)
                 .inner_join(archetype::table.on(item::archetype.eq(archetype::id)))
                 .filter(
-                    // TODO: Specific role? i.e. specify meta, loan, return
                     archetype::id.eq_any(user.permissions().select(role_permissions::archetype)),
                 )
                 .select(loan::all_columns)

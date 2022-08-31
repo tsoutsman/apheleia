@@ -243,5 +243,3 @@ impl User {
         User(0)
     }
 }
-
-// TODO: Test functions in this module

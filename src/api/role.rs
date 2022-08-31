@@ -34,7 +34,6 @@ async fn get_role(
 
 #[get("/roles")]
 async fn get_roles(pool: web::Data<DbPool>, _: User) -> impl Responder {
-    // TODO: Pagination
     let roles = role::table.load::<model::Role>(&pool).await?;
     Result::Ok(HttpResponse::Ok().json(roles))
 }

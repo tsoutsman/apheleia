@@ -98,7 +98,6 @@ impl actix_web::FromRequest for User {
 
         let result = async move {
             let id = (f)(token).await.map_err(|_| Error::Authentication)?;
-            // TODO
             Ok(Self(id as i32))
         };
         Box::pin(result)

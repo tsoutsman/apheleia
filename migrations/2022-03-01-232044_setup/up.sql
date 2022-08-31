@@ -1,5 +1,3 @@
--- TODO: Add indexes
-
 CREATE TABLE "user"(
     id      integer PRIMARY KEY
 );

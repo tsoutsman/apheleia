@@ -1,5 +1,3 @@
-// TODO: Make pub(crate) only for cfg(test)
-
 pub(crate) mod archetype;
 pub(crate) mod item;
 pub(crate) mod loan;
